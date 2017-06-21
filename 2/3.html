@@ -67,6 +67,8 @@
 		directionalLight.name='directionalLight';
 		scene.add(directionalLight);
 		
+		scene.add(new THREE.CameraHelper(directionalLight.shadow.camera));
+		
 		// ambientLight
 		var ambientLight=new THREE.AmbientLight(0x111111);
 		scene.add(ambientLight);
