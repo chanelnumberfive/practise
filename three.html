@@ -1,0 +1,107 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+	*{
+		padding:0;
+		margin:0;
+	}
+</style>
+</head>
+
+<body style="100%;overflow:hidden;">
+<div id="Stats-output">
+</div>
+<script type="application/javascript" src="js/three.min.js"></script>
+<script type="application/javascript" src="js/stats.js"></script>
+<script type="application/javascript" src="js/dat.gui.js"></script>
+<script type="application/javascript">
++function(){
+	'use strict';
+	
+	var stats = initStats();
+	var scene=new THREE.Scene(),
+		camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000),
+		render=new THREE.WebGLRenderer();
+	
+	camera.position.x = -25;
+	camera.position.y = 30;
+	camera.position.z = 45;
+	camera.lookAt(new THREE.Vector3(10, 0, 0));
+	
+	render.setClearColor(0x000000);
+	render.setSize(window.innerWidth,window.innerHeight);
+	render.shadowMap.enabled= true;
+	document.body.appendChild(render.domElement);
+	
+	
+	
+	// 环境光
+	var ambientLight=new THREE.AmbientLight(0x0c0c0c);
+	scene.add(ambientLight);
+	
+	// 地面
+	var planeGeometry=new THREE.PlaneGeometry(60,40,20,20),
+		planeMaterial=new THREE.MeshLambertMaterial({
+			color:0xcccccc,
+			wireframe:true
+		}),
+		plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.receiveShadow = true;
+	plane.rotation.x = -0.5 * Math.PI;
+	plane.position.set(15,0,0);
+	scene.add(plane);
+	
+	// 聚光灯
+	var spotLight=new THREE.SpotLight(0xffffff);
+	spotLight.position.set(-40,60,-40);
+	spotLight.castShadow=true;
+	spotLight.shadowMapWidth=3000;
+	spotLight.shadowMapHeight=3000;
+	
+	scene.add(spotLight);
+	
+	function renderFn(){
+		stats.update();
+		render.render(scene, camera);
+		requestAnimationFrame(renderFn);
+	}
+	renderFn();
+	
+	
+	function initStats() {
+
+		var stats = new Stats();
+
+		stats.setMode(0); // 0: fps, 1: ms
+
+
+		// Align top-left
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.left = '0px';
+		stats.domElement.style.top = '0px';
+
+		document.getElementById("Stats-output").appendChild(stats.domElement);
+
+		return stats;
+	}
+	
+	function drawShape(){
+		var shape=new THREE.Shape();
+		shape.moveTo(10,10);
+		shape.lineTo(10,40);
+		shape.bezierCurveTo(15, 25, 25, 25, 30, 40);
+		shape.splineThru(
+                    [new THREE.Vector2(32, 30),
+                        new THREE.Vector2(28, 20),
+                        new THREE.Vector2(30, 10),
+                    ]);
+		shape.quadraticCurveTo(20, 15, 10, 10);
+		return shape;
+	}
+}();
+</script>
+</body>
+</html>
