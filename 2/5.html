@@ -1,0 +1,207 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+* {
+	padding: 0;
+	margin: 0;
+}
+</style>
+</head>
+
+<body style="100%;overflow:hidden;">
+<div id="Stats-output"> </div>
+<script type="application/javascript" src="../js/three.min.js"></script> 
+<script type="application/javascript" src="../js/stats.min.js"></script> 
+<script type="application/javascript" src="../js/dat.gui.min.js"></script> 
+<script type="application/javascript" src="../js/OrbitControls.js"></script>
+<script src="../js/EffectComposer.js"></script>
+<script type="application/javascript">
++function(THREE){
+	'use strict';
+	
+	var renderer,
+		scene,
+		camera,
+		control,
+		cameraControl,
+		stats,
+		sceneBG,
+		cameraBG,
+		clock,
+		composer;
+	
+	function init(){
+		clock=new THREE.Clock();
+		
+		scene=new THREE.Scene();
+		
+		camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000);
+		camera.position.x = 25;
+        camera.position.y = 26;
+        camera.position.z = 23;
+		camera.lookAt(scene.position);
+		cameraControl = new THREE.OrbitControls(camera);
+		
+		renderer=new THREE.WebGLRenderer();
+		renderer.setClearColor(0x000000,1);
+		renderer.setSize(window.innerWidth,window.innerHeight);
+		renderer.shadowMap.enabled=true;
+		document.body.appendChild(renderer.domElement);
+		
+		// create the earth
+        var sphereGeometry = new THREE.SphereGeometry(15,60,60);
+		var sphereMaterial=createEarthMaterial('../images/earthmap4k.jpg');
+        var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+
+		sphere.name='earth';
+		
+        // add the cube to the scene
+        scene.add(sphere);
+		
+		// create the cloud earth
+		var cloudGeometry=new THREE.SphereGeometry(15.15,60,60);
+		var cloudMaterial=createCloudMaterial();
+		var cloud=new THREE.Mesh(cloudGeometry,cloudMaterial);
+		cloud.name='cloud';
+		scene.add(cloud);
+		
+		// directional light
+		var directionalLight=new THREE.DirectionalLight(0xffffff,1);
+		directionalLight.position.set(0,0,500);
+		directionalLight.name='directionalLight';
+		scene.add(directionalLight);
+		
+		//scene.add(new THREE.CameraHelper(directionalLight.shadow.camera));
+		
+		// ambientLight
+		var ambientLight=new THREE.AmbientLight(0x111111);
+		scene.add(ambientLight);
+		
+		control = new function() {
+			this.rotationSpeed = 0.001;
+            this.ambientLightColor = ambientLight.color.getHex();
+            this.directionalLightColor = directionalLight.color.getHex();
+		};
+		addControlGui(control);
+		addStatsObject();
+		
+		cameraBG = new THREE.OrthographicCamera(-window.innerWidth, window.innerWidth, window.innerHeight, -window.innerHeight, -10000, 10000);
+        cameraBG.position.z = 50;
+        sceneBG = new THREE.Scene();
+		
+		var bkMaterial= createBGMaterial('../images/starry_background.jpg');
+		var bkPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), bkMaterial);
+		bkPlane.position.z = -100;
+		bkPlane.scale.set(window.innerWidth * 2, window.innerHeight * 2, 1);
+		sceneBG.add(bkPlane);
+		
+		// setup the composer steps
+		// first render the background
+		var bgPass = new THREE.RenderPass(sceneBG, cameraBG);
+		// next render the scene (rotating earth), without clearing the current output
+		var renderPass = new THREE.RenderPass(scene, camera);
+		renderPass.clear = false;
+		// finally copy the result to the screen
+		var effectCopy = new THREE.ShaderPass(THREE.CopyShader);
+		effectCopy.renderToScreen = true;
+
+		// add these passes to the composer
+		composer = new THREE.EffectComposer(renderer);
+		composer.addPass(bgPass);
+		composer.addPass(renderPass);
+		composer.addPass(effectCopy);
+
+		render();
+	}
+	
+	function addVertices(mesh){
+		var vertices=mesh.geometry.vertices;
+		var vertexMaterial=new THREE.MeshLambertMaterial({
+			color:'green'
+		});
+		vertices.forEach(function(vertex){
+			var vertexSphere=new THREE.SphereGeometry(0.15,10,10);
+			var vertexMesh=new THREE.Mesh(vertexSphere,vertexMaterial);
+			vertexMesh.position.set(vertex.x,vertex.y,vertex.z);
+			scene.add(vertexMesh);
+		});
+	}
+	
+	function render(){
+		scene.getObjectByName('earth').rotation.y+=control.rotationSpeed;
+        scene.getObjectByName('cloud').rotation.y+=control.rotationSpeed*1.5;
+		
+		cameraControl.update();
+		stats.update();
+		renderer.autoClear = false;
+        composer.render();
+		requestAnimationFrame(render);
+	}
+	
+	function handlleResize(){
+		camera.aspect=window.innerWidth/window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth,window.innerHeight);
+	}
+	
+	function addControlGui(controlObject) {
+		var gui = new dat.GUI();
+		gui.add(controlObject, 'rotationSpeed', -0.01, 0.01);
+		gui.addColor(controlObject, 'ambientLightColor');
+        gui.addColor(controlObject, 'directionalLightColor');
+	}
+	
+	function addStatsObject() {
+		stats = new Stats();
+		stats.setMode(0);
+		stats.domElement.cssText='position:absolute;left:0;top:0;';
+		document.body.appendChild( stats.domElement );
+	}
+	
+	function createBGMaterial(url){
+		var loader = new THREE.TextureLoader();
+		var earthTexture=loader.load(url);
+		var earthMaterial=new THREE.MeshBasicMaterial({
+			depthTest: false
+		});
+		earthMaterial.map=earthTexture;
+		return earthMaterial;
+	}
+	
+	function createEarthMaterial(url){
+		var loader = new THREE.TextureLoader();
+		var earthTexture=loader.load(url),
+			normalMap=loader.load('../images/earth_normalmap_flat4k.jpg'),
+			specularMap=loader.load('../images/earthspec4k.jpg');
+		
+		var earthMaterial=new THREE.MeshPhongMaterial();
+		
+		earthMaterial.map=earthTexture;
+		
+		earthMaterial.normalMap=normalMap;
+		earthMaterial.normalScale.set(0.5,0.7);
+		
+		earthMaterial.specularMap=specularMap;
+		earthMaterial.specular.set(0x262626);
+		
+		return earthMaterial;
+	}
+	
+	function createCloudMaterial(){
+		var loader = new THREE.TextureLoader();
+		var cloudTexture=loader.load('../images/fair_clouds_4k.png');
+		var cloudMaterial=new THREE.MeshPhongMaterial();
+		cloudMaterial.map=cloudTexture;
+		cloudMaterial.transparent=true;
+		return cloudMaterial;
+	}
+	
+	window.onload=init;
+	window.addEventListener('resize',handlleResize,false);
+}(THREE);
+</script>
+</body>
+</html>
