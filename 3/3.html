@@ -1,0 +1,49 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+* {
+	padding: 0;
+	margin: 0;
+}
+	#cube{
+		position:absolute;
+		top:0;
+		left:0;
+		height:200px;
+		width:200px;
+		background-color:red;
+	}
+</style>
+</head>
+
+<body style="100%;overflow:hidden;">
+<div id="cube"></div>
+<script type="application/ecmascript" src="../js/tween.js"></script> 
+<script type="application/javascript">	
++function(){
+	'use strict';
+	
+	var box=document.getElementById('cube');
+	var position={
+		x:0,
+		y:0
+	};
+	var tween=new TWEEN.Tween(position);
+	tween.to({x:600},10000);
+	tween.start();
+	tween.onUpdate(function(){
+		cube.style.left=this.x+'px';
+	});
+	
+	function animation(){
+		requestAnimationFrame(animation);
+		TWEEN.update();
+	}
+	animation();
+}();
+</script>
+</body>
+</html>
