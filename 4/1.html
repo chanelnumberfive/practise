@@ -25,6 +25,10 @@
 		control,
 		stats,
 		loader=new THREE.TextureLoader();
+	var context,
+		sourceCode,
+		analyser,
+		analyser2;
 	
 	function init(){
 		scene=new THREE.Scene();
@@ -32,7 +36,7 @@
 		camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 		camera.position.x = 10;
         camera.position.y = 14;
-        camera.position.z = 20;
+        camera.position.z = 50;
         camera.lookAt(scene.position);
 		
 		renderer = new THREE.WebGLRenderer();
@@ -87,6 +91,8 @@
         };
 		addControlGui(control);
         addStatsObject();
+		setupSound();
+		loadSound('../music/closetoyou.mp3');
 		render();
 	}
 	
@@ -112,39 +118,85 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
     }
 	
+	function getAverageVolume(array) {
+        var values = 0;
+        var average;
+
+        var length = array.length;
+
+        // get all the frequency amplitudes
+        for (var i = 0; i < length; i++) {
+            values += array[i];
+        }
+
+        average = values / length;
+        return average;
+    }
+	
+	function updateCubes(){
+		var array=new Uint8Array(analyser.frequencyBinCount);
+		analyser.getByteFrequencyData(array);
+		var average = getAverageVolume(array);
+		
+		var array2=new Uint8Array(analyser.frequencyBinCount);
+		analyser2.getByteFrequencyData(array2);
+		var average2 = getAverageVolume(array2);
+		
+		if (scene.getObjectByName('cube')) {
+			var cube = scene.getObjectByName('cube');
+			var cube2 = scene.getObjectByName('cube2');
+			cube.scale.y = average / 20;
+			cube2.scale.y = average2 / 20;
+		}
+	}
+	
 	function render() {
         // update the camera
         var rotSpeed = control.rotationSpeed;
         camera.position.x = camera.position.x * Math.cos(rotSpeed) + camera.position.z * Math.sin(rotSpeed);
         camera.position.z = camera.position.z * Math.cos(rotSpeed) - camera.position.x * Math.sin(rotSpeed);
         camera.lookAt(scene.position);
-
+		
+		updateCubes();
         stats.update();
         renderer.render(scene, camera);
 
         requestAnimationFrame(render);
     }
 	
-	
-	var context;
-    var sourceNode;
-    var analyser;
-    var analyser2;
 
 	function setupSound(){
 		context=new AudioContext();
-		var sourceCode=context.createBufferSource(),
-			splitter=context.createBufferSplitter(),
-			analyser=context.createAnalyser(),
-			analyser2=context.createAnalyser();
+		sourceCode=context.createBufferSource();
+		var splitter=context.createChannelSplitter();
+		analyser=context.createAnalyser();
+		analyser2=context.createAnalyser();
 		analyser.smoothingTimeConstant=0.4;
 		analyser2.smoothingTimeConstant=0.4;
 		analyser.fftSize=1024;
 		analyser2.fftSize=1024;
-		spurceCode.conect(splitter);
-		splitter.conect(analyser,0);
-		splitter.conect(analyser2,1);
-		sourceCode.conect(context.destination);
+		sourceCode.connect(splitter);
+		splitter.connect(analyser,0);
+		splitter.connect(analyser2,1);
+		sourceCode.connect(context.destination);
+	}
+	
+	function loadSound(url){
+		var xhr=new XMLHttpRequest();
+		xhr.open('GET',url,true);
+		xhr.responseType='arraybuffer';
+		xhr.onload=function(){
+			context.decodeAudioData(xhr.response,function(buf){
+				playSound(buf);
+			});
+		}
+		xhr.send();
+	}
+	
+	function playSound(buffer){
+		sourceCode.buffer=buffer;
+		sourceCode.start(0);
+		sourceCode.loop=true;
 	}
 	
     window.onload = init;
