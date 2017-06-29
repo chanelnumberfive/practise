@@ -24,7 +24,8 @@
 		scene,
 		control,
 		stats,
-		loader=new THREE.TextureLoader();
+		loader=new THREE.TextureLoader(),
+		systems=[];
 	var context,
 		sourceCode,
 		analyser,
@@ -34,60 +35,23 @@
 		scene=new THREE.Scene();
 		
 		camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-		camera.position.x = 10;
-        camera.position.y = 44;
-        camera.position.z = 20;
+		camera.position.x = 46;
+        camera.position.y = 33;
+        camera.position.z = -14;
         camera.lookAt(scene.position);
 		
 		renderer = new THREE.WebGLRenderer();
         renderer.setClearColor(0x000000, 1.0);
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMapEnabled = true;
+        renderer.shadowMap.enabled = true;
 		document.body.appendChild(renderer.domElement);
-		
-		// add a plane
-		var planeGeometry = new THREE.PlaneGeometry(100, 100);
-        var planeMaterial = new THREE.MeshPhongMaterial({color: 0x3333ff});
-        var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        plane.receiveShadow = true;
-        plane.rotation.x = -0.5 * Math.PI;
-        plane.position.x = 0;
-        plane.position.y = -2;
-        plane.position.z = 0;
-        scene.add(plane);
-		
-		// create a particle
-		var cubeGeometry = new THREE.BoxGeometry(3,6, 3, 15, 25, 15);
-		var cubeMaterial=new THREE.ParticleBasicMaterial();
-		cubeMaterial.map=loader.load('../images/particle.png');
-		cubeMaterial.blending= THREE.AdditiveBlending;
-        cubeMaterial.transparent = true;
-        cubeMaterial.size=1.0;
-        var particle= new THREE.ParticleSystem(cubeGeometry, cubeMaterial);
-        particle.sortParticles = true;
-        particle.name='cube';
-        particle.position.x=1.75;
-        scene.add(particle);
-		
-		// create the second particle
-		var particleMaterial=cubeMaterial.clone();
-		particleMaterial.map=loader.load('../images/particle2.png');
-		var particleSysterm = new THREE.ParticleSystem(cubeGeometry, particleMaterial);
-        particleSysterm.name = 'cube2';
-        particleSysterm.position.x=-1.75;
-        scene.add(particleSysterm);
-		
-		var spotLight = new THREE.SpotLight(0xffffff);
-        spotLight.position.set(10, 20, 20);
-        spotLight.shadow.camera.near = 20;
-        spotLight.shadow.camera.far = 50;
-        spotLight.castShadow = true;
-		//scene.add(new THREE.CameraHelper(spotLight.shadow.camera));
-        scene.add(spotLight);
 		
 		control = new function() {
             this.rotationSpeed = 0.005;
             this.opacity = 0.6;
+			this.x=68;
+			this.y=64;
+			this.z=-55;
         };
 		addControlGui(control);
         addStatsObject();
@@ -99,6 +63,11 @@
 	function addControlGui(controlObject) {
         var gui = new dat.GUI();
         gui.add(controlObject, 'rotationSpeed', -0.01, 0.01);
+        gui.add(controlObject, 'x', -200, 200,function(){
+			console.log(this);
+		});
+        gui.add(controlObject, 'y', -200, 200);
+        gui.add(controlObject, 'z', -200, 200);
     }
 
     function addStatsObject() {
@@ -128,37 +97,48 @@
         for (var i = 0; i < length; i++) {
             values += array[i];
         }
-
         average = values / length;
         return average;
     }
 	
-	function updateCubes(){
-		var array=new Uint8Array(analyser.frequencyBinCount);
-		analyser.getByteFrequencyData(array);
-		var average = getAverageVolume(array);
+	function updateWaves(){
+		var array = new Uint8Array(analyser.frequencyBinCount);
+		analyser.getByteTimeDomainData(array);
 		
-		var array2=new Uint8Array(analyser.frequencyBinCount);
-		analyser2.getByteFrequencyData(array2);
-		var average2 = getAverageVolume(array2);
+		var pm = new THREE.PointsMaterial();
+		pm.map =loader.load("../images/particle.png");
+		pm.blending= THREE.AdditiveBlending;
+		pm.transparent = true;
+		pm.opacity = 0.2;
+		pm.size=1.5;
 		
-		if (scene.getObjectByName('cube')) {
-			
-			var cube = scene.getObjectByName('cube');
-			var cube2 = scene.getObjectByName('cube2');
-			cube.scale.y = average / 20;
-			cube2.scale.y = average2 / 20;
+		var geom = new THREE.Geometry();
+
+		for (var i = 0; i < array.length ; i++) {
+			var v = new THREE.Vector3(1,array[i]/8,(i/15));
+			geom.vertices.push(v);
 		}
+		var ps = new THREE.Points(geom, pm);
+		ps.sortParticles = true;
+		
+		systems.forEach(function(e) {e.position.x-=1.5});
+		
+		if (systems.length === 60) {
+			var oldPs = systems.shift();
+			if (oldPs) {
+				scene.remove(oldPs);
+			}
+		}
+		systems.push(ps);
+    	scene.add(ps);
 	}
 	
 	function render() {
         // update the camera
-        var rotSpeed = control.rotationSpeed;
-        camera.position.x = camera.position.x * Math.cos(rotSpeed) + camera.position.z * Math.sin(rotSpeed);
-        camera.position.z = camera.position.z * Math.cos(rotSpeed) - camera.position.x * Math.sin(rotSpeed);
-        camera.lookAt(scene.position);
 		
-		updateCubes();
+		camera.position.set(control.x,control.y,control.z);
+		camera.lookAt(scene.position);
+		updateWaves();
         stats.update();
         renderer.render(scene, camera);
 
