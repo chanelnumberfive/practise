@@ -963,14 +963,18 @@
 		matrix4: Matrix4,
 		vector3: Vector3,
 		vector4: Vector4,
-		creatMorePoint: function (obj) {
+		creatMorePointData: function (obj) {
 			var data =obj.data,
-				n=obj.number||parseInt(data.length/obj.dataLength),
 				gl=obj.gl,
 				drawMethod=obj.drawMethod||gl.STATIC_DRAW;
 
 			// Create a buffer object
-			var buffer = gl.createBuffer();
+			var buffer = gl.createBuffer(),
+				a_Position=null,
+				i=0,
+				l=0,
+				size=data.BYTES_PER_ELEMENT;
+			
 			if (!buffer) {
 				console.log('Failed to create the buffer object');
 				return -1;
@@ -978,33 +982,66 @@
 
 			// Bind the buffer object to target
 			gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+			
 			// Write date into the buffer object
 			gl.bufferData(gl.ARRAY_BUFFER, data, drawMethod);
 			
-			var a_Position = gl.getAttribLocation(gl.program,obj.positionName);
-			if (a_Position < 0) {
-				console.log('Failed to get the storage location of a_Position');
-				return -1;
-			}
-			// Assign the buffer object to a_Position variable
-			gl.vertexAttribPointer(a_Position,obj.dataLength, obj.dataType||gl.FLOAT, false, 0, 0);
+			if(typeof obj.dataLength==='number'){
+				
+				a_Position = gl.getAttribLocation(gl.program,obj.positionName);
+				if (a_Position < 0) {
+					console.log('Failed to get the storage location of a_Position');
+					return -1;
+				}
+				
+				// Assign the buffer object to a_Position variable
+				gl.vertexAttribPointer(a_Position,obj.dataLength, obj.dataType||gl.FLOAT, false, size*(obj.stride||0), size*(obj.offset||0));
 
-			// Enable the assignment to a_Position variable
-			gl.enableVertexAttribArray(a_Position);
+				// Enable the assignment to a_Position variable
+				gl.enableVertexAttribArray(a_Position);
+				
+			}else{
+				l=obj.dataLength.length;
+				for(i=0;i<l;i++){
+					a_Position = gl.getAttribLocation(gl.program,obj.positionName[i]);
+					if (a_Position < 0) {
+						console.log('Failed to get the storage location of a_Position');
+						return -1;
+					}
+					
+					// Assign the buffer object to a_Position variable
+					gl.vertexAttribPointer(a_Position,obj.dataLength[i], obj.dataType||gl.FLOAT, false, size*obj.stride, size*obj.offset[i]);
+
+					// Enable the assignment to a_Position variable
+					gl.enableVertexAttribArray(a_Position);	
+					
+				}
+			}
 			
 			// unbind the buffer object
 			gl.bindBuffer(gl.ARRAY_BUFFER, null);
-			return n;
+			
 		},
 		createShaders:function(){
 			return {
-				shape:'attribute vec4 position;\n'+
-				'uniform mat4 matrix;\n'+	
+				shape:''+
+				'attribute vec4 a_position;\n'+
+				'attribute float a_size;\n'+
+				'attribute vec4 a_color;\n'+
+				'varying vec4 v_color;\n'+
+				'uniform mat4 u_matrix;\n'+	
 				'void main(){\n'+
-					'gl_Position=matrix*position;\n'+
+					'gl_Position=u_matrix*position;\n'+
+					'gl_PointSize=a_size;\n'+
+					'v_color=a_color;\n'+
 				'}\n',
-				color:'void main(){\n'+
-					'gl_FragColor=vec4(1.0,0.0,0.0,1.0);\n'+	
+				color:''+
+				'#ifdef GL_ES\n' +
+				'precision mediump float;\n' +
+				'#endif\n' +
+				'varying vec4 v_color;\n'+
+				'void main(){\n'+
+					'gl_FragColor=v_color;\n'+	
 				'}\n'
 			};
 		}

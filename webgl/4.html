@@ -32,16 +32,23 @@
 		
 		var tool=$.blz;
 		var shape=''+
-		'attribute vec4 position;\n'+
-		'attribute float size;\n'+	
+		'attribute vec4 a_position;\n'+
+		'attribute float a_size;\n'+
+		'attribute vec4 a_color;\n'+
+		'varying vec4 v_color;\n'+
 		'uniform mat4 matrix;\n'+	
 		'void main(){\n'+
-			'gl_Position=matrix*position;\n'+
-			'gl_PointSize=size;\n'+
+			'gl_Position=matrix*a_position;\n'+
+			'gl_PointSize=a_size;\n'+
+			'v_color=a_color;\n'+
 		'}\n',
 		color=''+
+		'#ifdef GL_ES\n' +
+		'precision mediump float;\n' +
+		'#endif\n' +	
+		'varying vec4 v_color;\n'+	
 		'void main(){\n'+
-			'gl_FragColor=vec4(1.0,0.0,0.0,1.0);\n'+	
+			'gl_FragColor=v_color;\n'+	
 		'}\n',
 		gl=tool.initWebGl(elem);
 		
@@ -61,18 +68,17 @@
 			gl.clear(gl.COLOR_BUFFER_BIT);
 			matrix1.rotate((now-time)/100,0,0,1);
 			time=now;
-			tool.creatMorePoint({
+			tool.creatMorePointData({
 				gl:gl,
-				data:new Float32Array([0, 0.5, -0.5, -0.5,   0.5, -0.5]),
-				dataLength:2,
-				positionName:'position'
-			});
-			
-			tool.creatMorePoint({
-				gl:gl,
-				data:new Float32Array([10,15,20]),
-				dataLength:1,
-				positionName:'size'
+				data:new Float32Array([
+					0, 0.5,10,1.0,0.0,0.0,
+					-0.5,-0.5,15,0.0,1.0,0.0,
+					0.5,-0.5,20,0.0,0.0,1.0
+				]),
+				dataLength:[2,1,3],
+				positionName:['a_position','a_size','a_color'],
+				stride:6,
+				offset:[0,2,3]
 			});
 			
 			gl.uniformMatrix4fv(matrix1Location,false,matrix1.elements);
@@ -89,7 +95,7 @@
 		}
 		
 		init();
-		window.addEventListener('resize',handleResize);
+		//window.addEventListener('resize',handleResize);
 	}();
 </script> 
 </body>
