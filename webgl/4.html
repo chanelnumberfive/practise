@@ -1,0 +1,96 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+	* {
+		padding: 0;
+		margin: 0;
+	}
+	body{
+		background-color:#222;
+	}
+	canvas{
+		display:block;
+		margin:0 auto;
+	}
+</style>
+</head>
+
+<body style="height:100%;">
+<canvas id="canvas"></canvas>
+<script type="application/javascript" src="../js/jquery-3.2.1.min.js"></script>
+<script type="application/javascript" src="../js/blz-webgl.js"></script>
+<script type="application/javascript">
+	+function(){
+		'use strict';
+		
+		var elem=document.getElementById('canvas');
+		elem.width=window.innerHeight;
+		elem.height=window.innerHeight;
+		
+		var tool=$.blz;
+		var shape=''+
+		'attribute vec4 position;\n'+
+		'attribute float size;\n'+	
+		'uniform mat4 matrix;\n'+	
+		'void main(){\n'+
+			'gl_Position=matrix*position;\n'+
+			'gl_PointSize=size;\n'+
+		'}\n',
+		color=''+
+		'void main(){\n'+
+			'gl_FragColor=vec4(1.0,0.0,0.0,1.0);\n'+	
+		'}\n',
+		gl=tool.initWebGl(elem);
+		
+		tool.initShaders(gl,shape,color);
+		
+		var matrix1Location= gl.getUniformLocation(gl.program, 'matrix');
+		var matrix1=new tool.matrix4();
+		matrix1.setRotate(0,0,0,1);
+		
+		var time=+new Date();
+		gl.clearColor(0.0, 0.0, 0.0, 1.0);
+		
+		
+		
+		function init(){
+			var now=+new Date();
+			gl.clear(gl.COLOR_BUFFER_BIT);
+			matrix1.rotate((now-time)/100,0,0,1);
+			time=now;
+			tool.creatMorePoint({
+				gl:gl,
+				data:new Float32Array([0, 0.5, -0.5, -0.5,   0.5, -0.5]),
+				dataLength:2,
+				positionName:'position'
+			});
+			
+			tool.creatMorePoint({
+				gl:gl,
+				data:new Float32Array([10,15,20]),
+				dataLength:1,
+				positionName:'size'
+			});
+			
+			gl.uniformMatrix4fv(matrix1Location,false,matrix1.elements);
+			
+			//gl.drawArrays(gl.TRIANGLE_STRIP,0,3);
+			gl.drawArrays(gl.POINTS, 0, 3);
+			
+			requestAnimationFrame(init);
+		}
+		
+		function handleResize(){
+			elem.width=window.innerWidth;
+			elem.height=window.innerHeight;
+		}
+		
+		init();
+		window.addEventListener('resize',handleResize);
+	}();
+</script> 
+</body>
+</html>

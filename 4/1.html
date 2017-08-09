@@ -24,11 +24,22 @@
 		scene,
 		control,
 		stats,
+		particle,
+		spotLight,
 		loader=new THREE.TextureLoader();
 	var context,
 		sourceCode,
 		analyser,
-		analyser2;
+		analyser2,
+		javascriptNode,
+		count=1,
+		musicList=[
+			'../music/closetoyou.mp3',
+			'../music/paomo.mp3',
+			'../music/manbu.mp3',
+			'../music/danxiaogui.mp3',
+			'../music/zhende.mp3'
+		];
 	
 	function init(){
 		scene=new THREE.Scene();
@@ -63,7 +74,7 @@
 		cubeMaterial.blending= THREE.AdditiveBlending;
         cubeMaterial.transparent = true;
         cubeMaterial.size=1.0;
-        var particle= new THREE.ParticleSystem(cubeGeometry, cubeMaterial);
+        particle= new THREE.ParticleSystem(cubeGeometry, cubeMaterial);
         particle.sortParticles = true;
         particle.name='cube';
         particle.position.x=1.75;
@@ -77,7 +88,7 @@
         particleSysterm.position.x=-1.75;
         scene.add(particleSysterm);
 		
-		var spotLight = new THREE.SpotLight(0xffffff);
+		spotLight = new THREE.SpotLight(0xffffff);
         spotLight.position.set(10, 20, 20);
         spotLight.shadow.camera.near = 20;
         spotLight.shadow.camera.far = 50;
@@ -157,7 +168,7 @@
         camera.position.x = camera.position.x * Math.cos(rotSpeed) + camera.position.z * Math.sin(rotSpeed);
         camera.position.z = camera.position.z * Math.cos(rotSpeed) - camera.position.x * Math.sin(rotSpeed);
         camera.lookAt(scene.position);
-		
+		spotLight.lookAt(particle.position);
 		updateCubes();
         stats.update();
         renderer.render(scene, camera);
@@ -185,7 +196,7 @@
 		sourceCode.connect(splitter);
 		splitter.connect(analyser,0);
 		splitter.connect(analyser2,1);
-		sourceCode.connect(context.destination);	
+		sourceCode.connect(context.destination);
 	}
 	
 	function loadSound(url){
@@ -203,7 +214,16 @@
 	function playSound(buffer){
 		sourceCode.buffer=buffer;
 		sourceCode.start(0);
-		sourceCode.loop=true;
+		sourceCode.onended=function(){
+			if(count>=musicList.length){
+				count=0;
+				setupSound();
+				loadSound(musicList[count++]);
+			}else{
+				setupSound();
+				loadSound(musicList[count++]);
+			}
+		};
 	}
 	
     window.onload = init;
