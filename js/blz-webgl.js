@@ -947,8 +947,164 @@
 		this.elements = v;
 	};
 	
+	
+	// load texture
+	function loadTexture(gl,texture, u_Sampler, image,fn,count,i) {
 
-	$.blz = {
+		// Flip the image's y axis
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+
+		// Enable texture unit0
+		gl.activeTexture(gl['TEXTURE'+i]);
+		
+		// Bind the texture object to the target
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+
+		// Set the texture parameters
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+		// Set the texture image
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_SHORT_5_5_5_1, image);
+
+		// Set the texture unit 0 to the sampler
+		gl.uniform1i(u_Sampler, i);
+		
+		if(count<=0){
+			fn();
+		}
+
+	}
+	
+	function initTextures(obj,fn) {
+		var gl=obj.gl,
+			textureName=obj.textureName,
+			count=textureName.length,
+			url=obj.textureUrl,
+			l=count,
+			i=0;
+		for(;i<l;i++){
+			(function(i){
+				// Create a texture object
+				var texture = gl.createTexture();
+
+				// Get the storage location of u_Sampler
+				var u_Sampler = gl.getUniformLocation(gl.program, textureName[i]);
+
+				// Create the image object
+				var image = new Image();
+				image.onload = function () {
+					count--;
+					fn(gl,texture, u_Sampler,this,obj.fn,count,i);
+				};
+				image.src = url[i];
+			})(i);	
+		}
+
+		return true;
+	}
+	
+	// create points data
+	function createPointsData(obj) {
+			var data = obj.data,
+				gl = obj.gl,
+				drawMethod = obj.drawMethod || gl.STATIC_DRAW;
+
+			// Create a buffer object
+			var buffer = gl.createBuffer(),
+				a_Position = null,
+				i = 0,
+				l = 0,
+				size = data.BYTES_PER_ELEMENT;
+
+			if (!buffer) {
+				console.log('Failed to create the buffer object');
+				return -1;
+			}
+
+			// Bind the buffer object to target
+			gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+			// Write date into the buffer object
+			gl.bufferData(gl.ARRAY_BUFFER, data, drawMethod);
+
+			if (typeof obj.dataLength === 'number') {
+
+				a_Position = gl.getAttribLocation(gl.program, obj.positionName);
+				
+				// Assign the buffer object to a_Position variable
+				gl.vertexAttribPointer(a_Position, obj.dataLength, obj.dataType || gl.FLOAT, false, size * (obj.stride || 0), size * (obj.offset || 0));
+
+				// Enable the assignment to a_Position variable
+				gl.enableVertexAttribArray(a_Position);
+
+			} else {
+				l = obj.dataLength.length;
+				for (i = 0; i < l; i++) {
+					a_Position = gl.getAttribLocation(gl.program, obj.positionName[i]);
+
+					// Assign the buffer object to a_Position variable
+					gl.vertexAttribPointer(a_Position, obj.dataLength[i], obj.dataType || gl.FLOAT, false, size * obj.stride, size * obj.offset[i]);
+
+					// Enable the assignment to a_Position variable
+					gl.enableVertexAttribArray(a_Position);
+
+				}
+			}
+
+			// unbind the buffer object
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+		}
+	
+	// cube data
+  //    v6----- v5
+  //   /|      /|
+  //  v1------v0|
+  //  | |     | |
+  //  | |v7---|-|v4
+  //  |/      |/
+  //  v2------v3
+	var cubeVertices= new Float32Array([
+		// Vertex coordinates and color
+		 1.0,  1.0,  1.0, 1.0, 1.0, 1.0, // v0 White
+		-1.0,  1.0,  1.0, 1.0, 0.0, 1.0, // v1 Magenta
+		-1.0, -1.0,  1.0, 1.0, 0.0, 0.0, // v2 Red
+		 1.0, -1.0,  1.0, 1.0, 1.0, 0.0, // v3 Yellow
+		 1.0, -1.0, -1.0, 0.0, 1.0, 0.0, // v4 Green
+		 1.0,  1.0, -1.0, 0.0, 1.0, 1.0, // v5 Cyan
+		-1.0,  1.0, -1.0, 0.0, 0.0, 1.0, // v6 Blue
+		-1.0, -1.0, -1.0, 0.0, 0.0, 0.0 // v7 Black
+	]);
+
+	// Indices of the vertices
+	var cubeIndices = new Uint8Array([
+		0, 1, 2, 0, 2, 3, // front
+		0, 3, 4, 0, 4, 5, // right
+		0, 5, 6, 0, 6, 1, // up
+		1, 6, 7, 1, 7, 2, // left
+		7, 4, 3, 7, 3, 2, // down
+		4, 7, 6, 4, 6, 5 // back
+	]);
+	
+	function createCube(obj,fn){
+		var gl=obj.gl,
+			indices=obj.indices||cubeIndices,
+			indexBuffer = gl.createBuffer();
+		fn({
+			gl:gl,
+			data:obj.data||cubeVertices,
+			dataLength:obj.dataLength||[3,3],
+			positionName:obj.positionName,
+			stride:obj.stride||6,
+			offset:obj.offset||[0,3]
+		});
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+		return indices.length;
+	}
+	
+	$.blz= {
 		// webGl初始化
 		initWebGl: function (canvas) {
 			var context3d = null;
@@ -963,86 +1119,34 @@
 		matrix4: Matrix4,
 		vector3: Vector3,
 		vector4: Vector4,
-		creatMorePointData: function (obj) {
-			var data =obj.data,
-				gl=obj.gl,
-				drawMethod=obj.drawMethod||gl.STATIC_DRAW;
-
-			// Create a buffer object
-			var buffer = gl.createBuffer(),
-				a_Position=null,
-				i=0,
-				l=0,
-				size=data.BYTES_PER_ELEMENT;
-			
-			if (!buffer) {
-				console.log('Failed to create the buffer object');
-				return -1;
-			}
-
-			// Bind the buffer object to target
-			gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-			
-			// Write date into the buffer object
-			gl.bufferData(gl.ARRAY_BUFFER, data, drawMethod);
-			
-			if(typeof obj.dataLength==='number'){
-				
-				a_Position = gl.getAttribLocation(gl.program,obj.positionName);
-				if (a_Position < 0) {
-					console.log('Failed to get the storage location of a_Position');
-					return -1;
-				}
-				
-				// Assign the buffer object to a_Position variable
-				gl.vertexAttribPointer(a_Position,obj.dataLength, obj.dataType||gl.FLOAT, false, size*(obj.stride||0), size*(obj.offset||0));
-
-				// Enable the assignment to a_Position variable
-				gl.enableVertexAttribArray(a_Position);
-				
-			}else{
-				l=obj.dataLength.length;
-				for(i=0;i<l;i++){
-					a_Position = gl.getAttribLocation(gl.program,obj.positionName[i]);
-					if (a_Position < 0) {
-						console.log('Failed to get the storage location of a_Position');
-						return -1;
-					}
-					
-					// Assign the buffer object to a_Position variable
-					gl.vertexAttribPointer(a_Position,obj.dataLength[i], obj.dataType||gl.FLOAT, false, size*obj.stride, size*obj.offset[i]);
-
-					// Enable the assignment to a_Position variable
-					gl.enableVertexAttribArray(a_Position);	
-					
-				}
-			}
-			
-			// unbind the buffer object
-			gl.bindBuffer(gl.ARRAY_BUFFER, null);
-			
+		createPointsData:createPointsData ,
+		createCube:function(obj){
+			createCube(obj,createPointsData);
 		},
-		createShaders:function(){
+		initTextures:function(obj){
+			initTextures(obj,loadTexture);	
+		},
+		createShaders: function () {
 			return {
-				shape:''+
-				'attribute vec4 a_position;\n'+
-				'attribute float a_size;\n'+
-				'attribute vec4 a_color;\n'+
-				'varying vec4 v_color;\n'+
-				'uniform mat4 u_matrix;\n'+	
-				'void main(){\n'+
-					'gl_Position=u_matrix*position;\n'+
-					'gl_PointSize=a_size;\n'+
-					'v_color=a_color;\n'+
-				'}\n',
-				color:''+
-				'#ifdef GL_ES\n' +
-				'precision mediump float;\n' +
-				'#endif\n' +
-				'varying vec4 v_color;\n'+
-				'void main(){\n'+
-					'gl_FragColor=v_color;\n'+	
-				'}\n'
+				shape: '' +
+					'attribute vec4 a_position;\n' +
+					'attribute float a_size;\n' +
+					'attribute vec4 a_color;\n' +
+					'varying vec4 v_color;\n' +
+					'uniform mat4 u_matrix;\n' +
+					'void main(){\n' +
+					'gl_Position=u_matrix*position;\n' +
+					'gl_PointSize=a_size;\n' +
+					'v_color=a_color;\n' +
+					'}\n',
+				color: '' +
+					'#ifdef GL_ES\n' +
+					'precision mediump float;\n' +
+					'#endif\n' +
+					'varying vec4 v_color;\n' +
+					'void main(){\n' +
+					'gl_FragColor=v_color;\n' +
+					'}\n'
 			};
 		}
 	};

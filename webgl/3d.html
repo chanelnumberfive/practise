@@ -35,13 +35,12 @@ canvas {
 		'#version 100\n'+	
 		'attribute vec4 a_position;\n'+
 		'attribute float a_size;\n'+
-		'attribute vec2 a_texCoord;\n'+
-		'varying vec2 v_texCoord;\n'+
+		'attribute vec4 a_color;\n'+
+		'varying vec4 v_color;\n'+
 		'uniform mat4 matrix;\n'+	
 		'void main(){\n'+
 			'gl_Position=matrix*a_position;\n'+
-			'gl_PointSize=a_size;\n'+
-			'v_texCoord=a_texCoord;\n'+
+			'v_color=a_color;\n'+
 		'}\n',
 		color=''+
 		'#version 100\n'+	
@@ -50,13 +49,9 @@ canvas {
 		'#endif\n' +
 		'uniform sampler2D u_sampler0;\n'+	
 		'uniform sampler2D u_sampler1;\n'+	
-		'varying vec2 v_texCoord;\n'+	
+		'varying vec4 v_color;\n'+	
 		'void main(){\n'+
-			'vec4 v_color0=texture2D(u_sampler0,v_texCoord);\n'+
-			'vec4 v_color1=texture2D(u_sampler1,v_texCoord);\n'+
-			'float average;\n'+
-			'average=(v_color0.x+v_color0.y+v_color0.z)/3.0;\n'+
-			'gl_FragColor=vec4(average,average,average,1.0);\n'+	
+			'gl_FragColor=v_color;\n'+	
 		'}\n',
 		gl=tool.initWebGl(elem);
 		
@@ -64,51 +59,43 @@ canvas {
 		
 		var matrix1Location= gl.getUniformLocation(gl.program, 'matrix');
 		var matrix1=new tool.matrix4();
-		matrix1.setRotate(0,0,0,1);
+		matrix1.setPerspective(45,1/1,1,100).lookAt(4,4,4, 0, 0, 0, 0, 1, 0);
 		
 		var time=+new Date();
 		gl.clearColor(0.0, 0.0, 0.0, 1.0);
 		
-		tool.createPointsData({
+		tool.createCube({
 			gl:gl,
-			data:new Float32Array([
-				-0.5, 0.5,1.0,0.0,1.0,
-				-0.5,-0.5,1.0,0.0,0.0,
-				 0.5, 0.5,1.0,1.0,1.0,
-				 0.5,-0.5,1.0,1.0,0.0
-			]),
-			dataLength:[2,1,2],
-			positionName:['a_position','a_size','a_texCoord'],
-			stride:5,
-			offset:[0,2,3]
+			positionName:['a_position','a_color']
 		});
-		tool.initTextures({
-			gl:gl,
-			textureName:['u_sampler0','u_sampler1'],
-			textureUrl:[
-				'http://192.168.1.173:1234/webgl-practise/images/child.jpg',
-				'http://192.168.1.173:1234/webgl-practise/images/child.jpg'
-			],
-			fn:init
-		});
+		
+		// 深度识别
+		gl.enable(gl.DEPTH_TEST);
+		//gl.enable(gl.POLYGON_OFFSET_FILL);
+		//gl.polygonOffset(1.0,1.0);
 		
 		function init(){
 			var now=+new Date();
-			gl.clear(gl.COLOR_BUFFER_BIT);
-			matrix1.rotate((now-time)/100,0,0,1);
+			gl.clear(gl.DEPTH_BUFFER_BIT|gl.COLOR_BUFFER_BIT);
+			matrix1.rotate((now-time)/100,1,1,0);
 			time=now;
 			gl.uniformMatrix4fv(matrix1Location,false,matrix1.elements);
 			
-			gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-			
+			gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, 0);
 			requestAnimationFrame(init);
 		}
+		init();
 		
 		function handleResize(){
 			elem.width=window.innerWidth;
 			elem.height=window.innerHeight;
 		}
-	
+		
+		document.addEventListener('keyup',function(e){
+				if(e.which===37){
+					
+				}
+		},false);
 		//window.addEventListener('resize',handleResize);
 	}();
 </script>
