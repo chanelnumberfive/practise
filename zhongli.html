@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="js/jquery-3.2.1.min.js" ></script>
+		<script type="text/javascript">
+			var time=+new Date(),
+				preTime=time;
+//			document.documentElement.style.fontSize = document.documentElement.clientWidth / 7.5 + 'px';
+			window.addEventListener("deviceorientation",function(ev){
+				var now=+new Date();
+				document.getElementById("one").innerHTML=ev.alpha;
+				document.getElementById("two").innerHTML=ev.beta;
+				document.getElementById("thr").innerHTML=ev.gamma;
+				if(now-preTime>300){
+					document.getElementById("four").innerHTML=parseInt(1000/(now-time));
+					preTime=now;
+				}
+				time=now;
+				var l=window.innerWidth/2;
+				var t=window.innerHeight/2;
+				console.log(l+"---"+t)
+				var i=ev.alpha;
+				if(45<i&&i<135){
+					$("#ball").css("top",0);
+					$("#ball").css("left",l-ev.gamma*3);
+					$("#ball").css("transform","rotate("+-ev.gamma+"deg)");
+				}else if(135<i&&i<225){
+					$("#ball").css("top",t-ev.beta*5);
+					$("#ball").css("left",window.innerWidth-60);
+					$("#ball").css("transform","rotate("+(90-ev.beta)+"deg)");
+				}else if(225<i&&i<315){
+					$("#ball").css("top",window.innerHeight-6);
+					$("#ball").css("left",l-ev.gamma*3);
+					$("#ball").css("transform","rotate("+(180+ev.gamma)+"deg)");
+				}else if(315<i||i<45){
+					$("#ball").css("top",t-ev.beta*5);
+					$("#ball").css("left",0);
+					$("#ball").css("transform","rotate("+(-90+ev.beta)+"deg)");
+				}
+			})
+		</script>
+		<style type="text/css">
+			body{position: relative;}
+			#ball{position:absolute;}
+		</style>
+	</head>
+	<body>
+		<ul>
+			<li id="one"></li>
+			<li id="two"></li>
+			<li id="thr"></li>
+			<li id="four"></li>
+		</ul>
+		<div id="ball">球</div>
+	</body>
+	
+</html>

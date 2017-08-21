@@ -35,8 +35,8 @@ canvas {
 		'#version 100\n'+	
 		'attribute vec4 a_position;\n'+
 		'attribute float a_size;\n'+
-		'attribute vec4 a_color;\n'+
-		'varying vec4 v_color;\n'+
+		'attribute vec2 a_color;\n'+
+		'varying vec2 v_color;\n'+
 		'uniform mat4 matrix;\n'+	
 		'void main(){\n'+
 			'gl_Position=matrix*a_position;\n'+
@@ -49,9 +49,11 @@ canvas {
 		'#endif\n' +
 		'uniform sampler2D u_sampler0;\n'+	
 		'uniform sampler2D u_sampler1;\n'+	
-		'varying vec4 v_color;\n'+	
+		'varying vec2 v_color;\n'+	
 		'void main(){\n'+
-			'gl_FragColor=v_color;\n'+	
+			'vec4 v_color0=texture2D(u_sampler0,v_color);\n'+
+			'vec4 v_color1=texture2D(u_sampler1,v_color);\n'+
+			'gl_FragColor=v_color0;\n'+	
 		'}\n',
 		gl=tool.initWebGl(elem);
 		
@@ -67,6 +69,15 @@ canvas {
 		tool.createCube({
 			gl:gl,
 			positionName:['a_position','a_color']
+		});
+		tool.initTextures({
+			gl:gl,
+			textureName:['u_sampler0','u_sampler1'],
+			textureUrl:[
+				'http://192.168.1.173:1234/webgl-practise/images/child.jpg',
+				'http://192.168.1.173:1234/webgl-practise/images/child.png'
+			],
+			fn:init
 		});
 		
 		// 深度识别

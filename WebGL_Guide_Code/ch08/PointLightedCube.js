@@ -14,7 +14,7 @@ var VSHADER_SOURCE =
   'void main() {\n' +
   '  gl_Position = u_MvpMatrix * a_Position;\n' +
      // Recalculate the normal based on the model matrix and make its length 1.
-  '  vec3 normal = normalize(vec3(u_NormalMatrix * a_Normal));\n' +
+  '  vec3 normal = normalize(vec3(u_ModelMatrix * a_Normal));\n' +
      // Calculate world coordinate of vertex
   '  vec4 vertexPosition = u_ModelMatrix * a_Position;\n' +
      // Calculate the light direction and make it 1.0 in length
@@ -38,7 +38,7 @@ var FSHADER_SOURCE =
   'void main() {\n' +
   '  gl_FragColor = v_Color;\n' +
   '}\n';
-
+var n;
 function main() {
   // Retrieve <canvas> element
   var canvas = document.getElementById('webgl');
@@ -57,7 +57,7 @@ function main() {
   }
 
   // Set the vertex coordinates, the color and the normal
-  var n = initVertexBuffers(gl);
+  n = initVertexBuffers(gl);
   if (n < 0) {
     console.log('Failed to set the vertex information');
     return;
@@ -74,7 +74,7 @@ function main() {
   var u_LightColor = gl.getUniformLocation(gl.program, 'u_LightColor');
   var u_LightPosition = gl.getUniformLocation(gl.program, 'u_LightPosition');
   var u_AmbientLight = gl.getUniformLocation(gl.program, 'u_AmbientLight');
-  if (!u_MvpMatrix || !u_NormalMatrix || !u_LightColor || !u_LightPosition　|| !u_AmbientLight) { 
+  if (!u_MvpMatrix || u_NormalMatrix || !u_LightColor || !u_LightPosition　|| !u_AmbientLight) { 
     console.log('Failed to get the storage location');
     return;
   }
@@ -111,6 +111,17 @@ function main() {
 
   // Draw the cube
   gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
+  setInterval(function(){
+	  modelMatrix.rotate(0.1,0.0,1.0,0.0);
+	  mvpMatrix.rotate(0.1,0.0,1.0,0.0);
+	  normalMatrix.setInverseOf(modelMatrix);
+  	  normalMatrix.transpose();
+	  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+	  gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+	  gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+	  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	  gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
+  },1000/60);	
 }
 
 function initVertexBuffers(gl) {

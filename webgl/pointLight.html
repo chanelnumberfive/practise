@@ -1,0 +1,126 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+* {
+	padding: 0;
+	margin: 0;
+}
+body {
+	background-color: #222;
+}
+canvas {
+	display: block;
+	margin: 0 auto;
+}
+</style>
+</head>
+
+<body style="height:100%;">
+<canvas id="canvas"></canvas>
+<script type="application/javascript" src="../js/jquery-3.2.1.min.js"></script> 
+<script type="application/javascript" src="../js/blz-webgl.js"></script> 
+<script type="application/javascript">
+	+function(){
+		'use strict';
+		
+		var elem=document.getElementById('canvas'),
+			w=window.innerWidth,
+			h=window.innerHeight,
+			h1=0,
+			w1=0;
+		elem.width=w;
+		elem.height=h;
+		
+		var tool=$.blz;
+		var shape=''+
+		'#version 100\n'+	
+		'attribute vec4 a_position;\n'+
+		'attribute vec4 a_normal;\n'+
+		'attribute vec2 a_coord;\n'+
+		'varying vec2 v_coord;\n'+
+		'varying vec3 v_normal;\n'+	
+		'varying vec3 v_position;\n'+	
+		'uniform mat4 matrix;\n'+	
+		'uniform mat4 modelMatrix;\n'+	
+		'void main(){\n'+
+			'gl_Position=matrix*a_position;\n'+
+			'v_position=vec3(modelMatrix*a_position);\n'+
+			'v_normal=normalize(vec3(modelMatrix*a_normal));\n'+
+			'v_coord=a_coord;\n'+
+		'}\n',
+		color=''+
+		'#version 100\n'+	
+		'#ifdef GL_ES\n' +
+		'precision mediump float;\n' +
+		'#endif\n' +
+		'uniform sampler2D u_sampler0;\n'+	
+		'uniform sampler2D u_sampler1;\n'+		
+		'varying vec2 v_coord;\n'+	
+		'varying vec3 v_normal;\n'+	
+		'varying vec3 v_position;\n'+	
+		'void main(){\n'+
+			'vec4 v_color0=texture2D(u_sampler0,v_coord);\n'+
+			'vec4 v_color1=texture2D(u_sampler1,v_coord);\n'+
+			'vec3 lightDirection=normalize(vec3(4.0,4.0,4.0)-v_position);\n'+
+			'float angel=max(dot(lightDirection,v_normal),0.0);\n'+
+			'gl_FragColor=vec4(v_color0.rgb*(vec3(1.0,1.0,1.0)*angel+vec3(0.2,0.2,0.2)),v_color0.a);\n'+	
+		'}\n',
+		gl=tool.initWebGl(elem);
+		
+		tool.initShaders(gl,shape,color);
+		
+		var matrixLocation= gl.getUniformLocation(gl.program, 'matrix');
+		var matrix=new tool.matrix4();
+		matrix.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,10.0).lookAt(4.0,4.0,4.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		
+		var modelMatrixLocation=gl.getUniformLocation(gl.program, 'modelMatrix'),
+			modelMatrix=new tool.matrix4();
+		
+		var time=+new Date();
+		gl.clearColor(0.0, 0.0, 0.0, 1.0);
+		
+		tool.createCube({
+			gl:gl,
+			positionName:['a_position','a_coord','a_normal']
+		});
+		tool.initTextures({
+			gl:gl,
+			textureName:['u_sampler0','u_sampler1'],
+			textureUrl:[
+				'../images/child.jpg',
+				'../images/child.png'
+			],
+			fn:init
+		});
+		
+		// 深度识别
+		gl.enable(gl.DEPTH_TEST);
+		//gl.enable(gl.POLYGON_OFFSET_FILL);
+		//gl.polygonOffset(1.0,1.0);
+		
+		function init(){
+			var now=+new Date();
+			gl.clear(gl.DEPTH_BUFFER_BIT|gl.COLOR_BUFFER_BIT);
+			matrix.rotate((now-time)/100,0,1,0);
+			modelMatrix.rotate((now-time)/100,0,1,0);
+			time=now;
+			gl.uniformMatrix4fv(matrixLocation,false,matrix.elements);
+			gl.uniformMatrix4fv(modelMatrixLocation,false,modelMatrix.elements);
+			gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, 0);
+			requestAnimationFrame(init);
+		}
+		
+		function handleResize(){
+			elem.width=window.innerWidth;
+			elem.height=window.innerHeight;
+			matrix1.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,10.0).lookAt(0.0,4.0,4.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0).multiply(matrix2);
+			gl.viewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);
+		}
+		window.addEventListener('resize',handleResize);
+	}();
+</script>
+</body>
+</html>
