@@ -32,6 +32,7 @@ canvas {
 		elem.width=w;
 		elem.height=h;
 		
+		// 制作着色器
 		var tool=$.blz;
 		var shape=''+
 		'#version 100\n'+	
@@ -68,39 +69,38 @@ canvas {
 		
 		tool.initShaders(gl,shape,color);
 		
-		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix');
-		var viewMatrix=new tool.matrix4();
-		viewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,100.0).lookAt(10,10,10, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-		
-		var modelMatrixLocation=gl.getUniformLocation(gl.program, 'modelMatrix'),
+		// 着色器初始化
+		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix'),
+		    baseViewMatrix=new tool.matrix4(),
+			viewMatrix=new tool.matrix4(),
+            modelMatrixLocation=gl.getUniformLocation(gl.program, 'modelMatrix'),
 			modelMatrix=new tool.matrix4(),
-			upArmMatrix=new tool.matrix4(),
-			downArmMatrix=new tool.matrix4();
-		downArmMatrix.setScale(1,2,1);
-		upArmMatrix.setScale(1.2,1,1.2).translate(0,2,0);
+			u_lightDirection = gl.getUniformLocation(gl.program, 'u_lightDirection'),
+		    lightDirection = new tool.vector3([0.0, 1.0, 1.0]);
 		
-		var u_lightDirection = gl.getUniformLocation(gl.program, 'u_lightDirection');
-		var lightDirection = new tool.vector3([0.0, 1.0, 1.0]);
+		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,100.0).lookAt(10,10,10, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 		lightDirection.normalize();     // Normalize
 		gl.uniform3fv(u_lightDirection, lightDirection.elements);
-		
-		var time=+new Date();
 		gl.clearColor(0.0, 0.0, 0.0, 1.0);
 		
+		var bottomAngelY=0,
+			upAngelX=0;
+		
+		// 配置纹理
 		tool.initTextures({
 			gl:gl,
 			textureName:['u_sampler0','u_sampler1'],
 			textureUrl:[
-				'../images/earthmap4k.jpg',
-				'../images/earthspec4k.jpg'
+				'../images/child.jpg',
+				'../images/child.png'
 			],
 			fn:init
 		});
 		
 		// 深度识别
 		gl.enable(gl.DEPTH_TEST);
-		//gl.enable(gl.POLYGON_OFFSET_FILL);
-		//gl.polygonOffset(1.0,1.0);
+		gl.enable(gl.POLYGON_OFFSET_FILL);
+		gl.polygonOffset(1.0,1.0);
 		
 		var cubeOption={
 				gl:gl,
@@ -113,52 +113,47 @@ canvas {
 		function init(){
 			gl.clear(gl.DEPTH_BUFFER_BIT|gl.COLOR_BUFFER_BIT);
 			
-			cubeOption.modelMatrix=downArmMatrix;
-			cubeOption.viewMatrix.multiply(downArmMatrix);
+			// bottom arm
+			modelMatrix.setRotate(bottomAngelY,0,1,0);
+			viewMatrix.set(baseViewMatrix).rotate(bottomAngelY,0,1,0);
 			tool.createCube(cubeOption);
 			
-			cubeOption.modelMatrix=upArmMatrix;
-			cubeOption.viewMatrix.multiply(upArmMatrix);
+			// up arm
+			modelMatrix.rotate(upAngelX,1,0,0);
+			viewMatrix.translate(0,1,0).rotate(upAngelX,1,0,0).translate(0,1,0);
 			tool.createCube(cubeOption);
-			
-			cubeOption.viewMatrix=viewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,100.0).lookAt(15,15,15, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-
-			requestAnimationFrame(init);
 		}
 		
 		function handleResize(){
 			elem.width=window.innerWidth;
 			elem.height=window.innerHeight;
-			viewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,10.0).lookAt(1.8,1.8,1.8, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0).multiply(modelMatrix);
+			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,10.0).lookAt(10,10,10, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 			gl.viewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);
 		}
 		window.addEventListener('resize',handleResize);
 		
 		// 事件控制
-		var count=0,
-			angel=1;
 		document.addEventListener('keydown',function(e){
-			if(e.which===37){
-				downArmMatrix.rotate(-1,0,1,0);
-			}else if(e.which===38){
-				if(++count>135){
-					count=135;
-					angel=0;
-				}else{
-					angel=1;
-				}
-				upArmMatrix.translate(0,-0.5,0).rotate(angel,1,0,0).translate(0,0.5,0);
-			}else if(e.which===39){
-				downArmMatrix.rotate(1,0,1,0);
-			}else if(e.which===40){
-				if(--count<=-135){
-					count=-135;
-					angel=0;
-				}else{
-					angel=-1;
-				}
-				upArmMatrix.translate(0,-0.5,0).rotate(angel,1,0,0).translate(0,0.5,0);
+			switch(e.which){
+				case 37:
+					bottomAngelY+=3;
+					bottomAngelY=bottomAngelY>=360?0:bottomAngelY;
+					break;
+				case 38:
+					upAngelX+=3;
+					upAngelX=upAngelX>=135?135:upAngelX;
+					break;
+				case 39:
+					bottomAngelY-=3;
+					bottomAngelY=bottomAngelY<=-360?0:bottomAngelY;
+					break;
+				case 40:
+					upAngelX-=3;
+					upAngelX=upAngelX<=-135?-135:upAngelX;
+					break;
+				default:return;	
 			}
+			init();
 		},false);
 	}();
 </script>

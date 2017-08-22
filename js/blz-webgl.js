@@ -1064,8 +1064,10 @@
 	//  | |v7---|-|v4
 	//  |/      |/
 	//  v2------v3
-	var cubeVertices = new Float32Array([ // Vertex coordinates
-		1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, -1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, -1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+	var cubeVertices = [ // Vertex coordinates
+		1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 
+		-1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+		-1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
 		1.0, -1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, // v0-v1-v2-v3 front
 
 		1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
@@ -1074,17 +1076,25 @@
 		1.0, 1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // v0-v3-v4-v5 right
 
 		1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-		1.0, 1.0, -1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, -1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, // v0-v5-v6-v1 up
+		1.0, 1.0, -1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 
+		-1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 
+		-1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, // v0-v5-v6-v1 up
 
-		-1.0, 1.0, 1.0, 1.0, 1.0, 0.0, -1.0, 0.0, 0.0, -1.0, 1.0, -1.0, 0.0, 1.0, 0.0, -1.0, 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, -1.0, 1.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, // v1-v6-v7-v2 left
+		-1.0, 1.0, 1.0, 1.0, 1.0, 0.0, -1.0, 0.0, 0.0,
+		-1.0, 1.0, -1.0, 0.0, 1.0, 0.0, -1.0, 0.0, 0.0,
+		-1.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0,
+		-1.0, -1.0, 1.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, // v1-v6-v7-v2 left
 
 		-1.0, -1.0, -1.0, 1.0, 1.0, 0.0, 0.0, -1.0, 0.0,
 		1.0, -1.0, -1.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0,
-		1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, -1.0, -1.0, 1.0, 1.0, 0.0, 0.0, 0.0, -1.0, 0.0, // v7-v4-v3-v2 down
+		1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 
+		-1.0, -1.0, 1.0, 1.0, 0.0, 0.0, 0.0, -1.0, 0.0, // v7-v4-v3-v2 down
 
-		1.0, -1.0, -1.0, 1.0, 1.0, 0.0, 0.0, 0.0, -1.0, -1.0, -1.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0, -1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0,
+		1.0, -1.0, -1.0, 1.0, 1.0, 0.0, 0.0, 0.0, -1.0,
+		-1.0, -1.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0,
+		-1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0,
 		1.0, 1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0 // v4-v7-v6-v5 back
-	]);
+	];
 
 	var cubeIndices = new Uint8Array([ // Indices of the vertices
 		0, 1, 2, 0, 2, 3, // front
@@ -1097,23 +1107,45 @@
 
 	function createCube(obj, fn) {
 		var gl = obj.gl,
-			indices = obj.indices || cubeIndices,
-			indexBuffer = gl.createBuffer();
+			vertices = cubeVertices.slice(),
+			indexBuffer = gl.createBuffer(),
+			w=obj.width||1,
+			h=obj.height||1,
+			l=obj.length||1,
+			length=cubeVertices.length,
+			i=0;
+		if(w!==1){
+			for(i=0;i<length;i+=9){
+				vertices[i]*=w;
+			}
+		}
+		if(h!==1){
+			for(i=1;i<length;i+=9){
+				vertices[i]*=h;
+			}
+		}
+		if(l!==1){
+			for(i=2;i<length;i+=9){
+				vertices[i]*=l;
+			}
+		}
+		vertices=new Float32Array(vertices);
+		
 		fn({
 			gl: gl,
-			data: obj.data || cubeVertices,
+			data: vertices,
 			dataLength: obj.dataLength || [3, 2, 3],
 			positionName: obj.positionName,
 			stride: obj.stride || 9,
 			offset: obj.offset || [0, 3, 6]
 		});
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cubeIndices, gl.STATIC_DRAW);
 		
 		gl.uniformMatrix4fv(obj.viewMatrixLocation,false,obj.viewMatrix.elements);
 		gl.uniformMatrix4fv(obj.modelMatrixLocation,false,obj.modelMatrix.elements);
 		
-		gl.drawElements(gl.TRIANGLES,indices.length, gl.UNSIGNED_BYTE, 0);
+		gl.drawElements(gl.TRIANGLES,cubeIndices.length, gl.UNSIGNED_BYTE, 0);
 	}
 
 	// sphere data
