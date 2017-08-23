@@ -1030,7 +1030,10 @@
 		if (typeof obj.dataLength === 'number') {
 
 			a_Position = gl.getAttribLocation(gl.program, obj.positionName);
-
+			if(!a_Position){
+				console.log('Failed to get the '+obj.positionName+' location');
+				return;
+			}
 			// Assign the buffer object to a_Position variable
 			gl.vertexAttribPointer(a_Position, obj.dataLength, obj.dataType || gl.FLOAT, false, size * (obj.stride || 0), size * (obj.offset || 0));
 
@@ -1041,13 +1044,15 @@
 			l = obj.dataLength.length;
 			for (i = 0; i < l; i++) {
 				a_Position = gl.getAttribLocation(gl.program, obj.positionName[i]);
+				if(a_Position<0){
+					console.log('Failed to get the '+obj.positionName[i]+' location');
+				}else{
+					// Assign the buffer object to a_Position variable
+					gl.vertexAttribPointer(a_Position, obj.dataLength[i], obj.dataType || gl.FLOAT, false, size * obj.stride, size * obj.offset[i]);
 
-				// Assign the buffer object to a_Position variable
-				gl.vertexAttribPointer(a_Position, obj.dataLength[i], obj.dataType || gl.FLOAT, false, size * obj.stride, size * obj.offset[i]);
-
-				// Enable the assignment to a_Position variable
-				gl.enableVertexAttribArray(a_Position);
-
+					// Enable the assignment to a_Position variable
+					gl.enableVertexAttribArray(a_Position);
+				}					
 			}
 		}
 
@@ -1144,14 +1149,16 @@
 		
 		if(obj.viewMatrixLocation){
 			gl.uniformMatrix4fv(obj.viewMatrixLocation,false,obj.viewMatrix.elements);
-			gl.uniformMatrix4fv(obj.modelMatrixLocation,false,obj.modelMatrix.elements);
+			gl.uniformMatrix4fv(obj.normalMatrixLocation,false,obj.normalMatrix.elements);
 
 			gl.drawElements(gl.TRIANGLES,cubeIndices.length, gl.UNSIGNED_BYTE, 0);
-		}	
+		}
+		return cubeIndices.length;
 	}
 	
 	function drawCube(obj){
 		var gl=obj.gl;
+		
 		gl.uniformMatrix4fv(obj.viewMatrixLocation,false,obj.viewMatrix.elements);
 		gl.uniformMatrix4fv(obj.normalMatrixLocation,false,obj.normalMatrix.elements);
 
