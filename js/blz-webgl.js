@@ -947,7 +947,11 @@
 		this.elements = v;
 	};
 
-
+	//
+	var glBuffer={
+		verticesBuffer:null,
+		indicesBuffer:null
+	};
 	// load texture
 	function loadTexture(gl, texture, u_Sampler, image, fn, count, i) {
 
@@ -1010,12 +1014,16 @@
 			drawMethod = obj.drawMethod || gl.STATIC_DRAW;
 
 		// Create a buffer object
-		var buffer = gl.createBuffer(),
+		var buffer,
 			a_Position = null,
 			i = 0,
 			l = 0,
 			size = data.BYTES_PER_ELEMENT;
-
+		if(glBuffer.verticesBuffer){
+			buffer=glBuffer.verticesBuffer;
+		}else{
+			buffer=glBuffer.verticesBuffer=gl.createBuffer();
+		}
 		if (!buffer) {
 			console.log('Failed to create the buffer object');
 			return -1;
@@ -1041,7 +1049,7 @@
 			gl.enableVertexAttribArray(a_Position);
 
 		} else {
-			l = obj.dataLength.length;
+			l = obj.positionName.length;
 			for (i = 0; i < l; i++) {
 				a_Position = gl.getAttribLocation(gl.program, obj.positionName[i]);
 				if(a_Position<0){
@@ -1058,7 +1066,6 @@
 
 		// unbind the buffer object
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
 	}
 
 	// cube data
@@ -1113,12 +1120,18 @@
 	function createCube(obj, fn) {
 		var gl = obj.gl,
 			vertices = cubeVertices.slice(),
-			indexBuffer = gl.createBuffer(),
+			indexBuffer,
 			w=obj.width||1,
 			h=obj.height||1,
 			l=obj.length||1,
 			length=cubeVertices.length,
 			i=0;
+		
+		if(glBuffer.verticesBuffer){
+			indexBuffer=glBuffer.indexBuffer;
+		}else{
+			indexBuffer=glBuffer.indexBuffer=gl.createBuffer();
+		}
 		if(w!==1){
 			for(i=0;i<length;i+=9){
 				vertices[i]*=w;
@@ -1266,6 +1279,19 @@
 		},
 		initTextures: function (obj) {
 			initTextures(obj, loadTexture);
+		},
+		createProgram:function initShaders(gl, vshader, fshader,tip) {
+			var program = createProgram(gl, vshader, fshader);
+			if (!program) {
+				console.log('Failed to create program');
+				return false;
+			}
+
+			if(tip){
+				gl.useProgram(program);
+			}
+
+			return program;
 		},
 		createShaders: function () {
 			return {
