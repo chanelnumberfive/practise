@@ -948,10 +948,332 @@
 	};
 
 	//
-	var glBuffer={
-		verticesBuffer:null,
-		indicesBuffer:null
+	var glBuffer = {
+		verticesBuffer: null,
+		indicesBuffer: null
 	};
+
+	// cube data
+	//    v6----- v5
+	//   /|      /|
+	//  v1------v0|
+	//  | |     | |
+	//  | |v7---|-|v4
+	//  |/      |/
+	//  v2------v3
+	var cubeVertices = [ // Vertex coordinates
+		0.5, 0.5, 0.5, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, -0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, -0.5, -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+		0.5, -0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, // v0-v1-v2-v3 front
+
+		0.5, 0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+		0.5, -0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+		0.5, -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+		0.5, 0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // v0-v3-v4-v5 right
+
+		0.5, 0.5, 0.5, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+		0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, -0.5, 0.5, -0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, -0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, // v0-v5-v6-v1 up
+
+		-0.5, 0.5, 0.5, 1.0, 1.0, 0.0, -1.0, 0.0, 0.0, -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, -1.0, 0.0, 0.0, -0.5, -0.5, -0.5, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, -0.5, -0.5, 0.5, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, // v1-v6-v7-v2 left
+
+		-0.5, -0.5, -0.5, 1.0, 1.0, 0.0, 0.0, -1.0, 0.0,
+		0.5, -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0,
+		0.5, -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, -0.5, -0.5, 0.5, 1.0, 0.0, 0.0, 0.0, -1.0, 0.0, // v7-v4-v3-v2 down
+
+		0.5, -0.5, -0.5, 1.0, 1.0, 0.0, 0.0, 0.0, -1.0, -0.5, -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0, -0.5, 0.5, -0.5, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0,
+		0.5, 0.5, -0.5, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0 // v4-v7-v6-v5 back
+	];
+
+	var cubeIndices = new Uint8Array([ // Indices of the vertices
+		0, 1, 2, 0, 2, 3, // front
+		4, 5, 6, 4, 6, 7, // right
+		8, 9, 10, 8, 10, 11, // up
+		12, 13, 14, 12, 14, 15, // left
+		16, 17, 18, 16, 18, 19, // down
+		20, 21, 22, 20, 22, 23 // back
+	]);
+
+	// plane data
+	var planeVertices = [
+		1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+		1.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 // v0-v1-v2-v3
+	];
+
+	var planeIndices = new Uint8Array([0, 1, 2, 0, 2, 3]);
+
+	// create cube Buffer
+	function createCubeBuffers(obj) {
+		var gl = obj.gl,
+			vertices = cubeVertices.slice(),
+			indexBuffer = gl.createBuffer(),
+			verticesBuffer = gl.createBuffer(),
+			w = obj.width || 1,
+			h = obj.height || 1,
+			l = obj.length || 1,
+			length = cubeVertices.length,
+			i = 0,
+			drawMethod = obj.drawMethod || gl.STATIC_DRAW;
+
+		if (!indexBuffer) {
+			console.log('Failed to create the buffer object');
+			return -1;
+		}
+		if (!verticesBuffer) {
+			console.log('Failed to create the buffer object');
+			return -1;
+		}
+
+		if (w !== 1) {
+			for (i = 0; i < length; i += 9) {
+				vertices[i] *= w;
+			}
+		}
+		if (h !== 1) {
+			for (i = 1; i < length; i += 9) {
+				vertices[i] *= h;
+			}
+		}
+		if (l !== 1) {
+			for (i = 2; i < length; i += 9) {
+				vertices[i] *= l;
+			}
+		}
+		vertices = new Float32Array(vertices);
+
+		// Bind the buffer object to target
+		gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+		// Write date into the buffer object
+		gl.bufferData(gl.ARRAY_BUFFER, vertices, drawMethod);
+
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cubeIndices, gl.STATIC_DRAW);
+
+		// unbind the buffer object
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+		return {
+			indexBuffer: indexBuffer,
+			verticesBuffer: verticesBuffer,
+			indicesLength: cubeIndices.length,
+			size:vertices.BYTES_PER_ELEMENT,
+			attributeName:obj.attributeName,
+			gl:gl,
+			dataLength: obj.dataLength || [3, 2, 3],
+			stride: obj.stride || 9,
+			offset: obj.offset || [0, 3, 6]
+			
+		};
+	}
+
+	// create plane buffer
+	function createPlaneBuffers(obj) {
+		var gl = obj.gl,
+			vertices = planeVertices.slice(),
+			indexBuffer = gl.createBuffer(),
+			verticesBuffer = gl.createBuffer(),
+			w = obj.width || 1,
+			h = obj.height || 1,
+			length = planeVertices.length,
+			i = 0,
+			drawMethod = obj.drawMethod || gl.STATIC_DRAW;
+
+		if (!indexBuffer) {
+			console.log('Failed to create the buffer object');
+			return -1;
+		}
+		if (!verticesBuffer) {
+			console.log('Failed to create the buffer object');
+			return -1;
+		}
+
+		if (w !== 1) {
+			for (i = 0; i < length; i += 9) {
+				vertices[i] *= w;
+			}
+		}
+		if (h !== 1) {
+			for (i = 1; i < length; i += 9) {
+				vertices[i] *= h;
+			}
+		}
+		vertices = new Float32Array(vertices);
+
+		// Bind the buffer object to target
+		gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+		// Write date into the buffer object
+		gl.bufferData(gl.ARRAY_BUFFER, vertices, drawMethod);
+
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, planeIndices, gl.STATIC_DRAW);
+
+		// unbind the buffer object
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+		return {
+			indexBuffer: indexBuffer,
+			verticesBuffer: verticesBuffer,
+			indicesLength: planeIndices.length,
+			size:vertices.BYTES_PER_ELEMENT,
+			attributeName:obj.attributeName,
+			gl:gl,
+			dataLength: obj.dataLength || [3, 2, 3],
+			stride: obj.stride || 9,
+			offset: obj.offset || [0, 3, 6]
+		};
+	}
+	
+	function linkBuffers(obj) {
+		var gl = obj.gl,
+			a_Position = null,
+			i = 0,
+			l = 0,
+			size = obj.size;
+
+		// Bind the buffer object to target
+		gl.bindBuffer(gl.ARRAY_BUFFER, obj.verticesBuffer);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBuffer);
+		
+		l = obj.attributeName.length;
+		for (i = 0; i < l; i++) {
+			a_Position = gl.getAttribLocation(gl.program, obj.attributeName[i]);
+			if (a_Position < 0) {
+				console.log('Failed to get the ' + obj.attributeName[i] + ' location');
+			} else {
+				// Assign the buffer object to a_Position variable
+				gl.vertexAttribPointer(a_Position, obj.dataLength[i], obj.dataType || gl.FLOAT, false, size * obj.stride, size * obj.offset[i]);
+
+				// Enable the assignment to a_Position variable
+				gl.enableVertexAttribArray(a_Position);
+			}
+		}
+		return obj.indicesLength;
+	}
+
+	// creat texture
+	function loadImage(gl, texture, u_Sampler, image, fn, count, i) {
+
+		// Flip the image's y axis
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+
+		// Bind the texture object to the target
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+
+		// Set the texture parameters
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+		// Set the texture image
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_SHORT_5_5_5_1, image);
+
+		// Set the texture unit 0 to the sampler
+		gl.uniform1i(u_Sampler, i);
+
+		// unbind the texture object
+		gl.bindTexture(gl.TEXTURE_2D, null);
+		if (count <= 0) {
+			fn();
+		}
+
+	}
+
+	function createTextures(obj, loadImage) {
+		var gl = obj.gl,
+			textureName = obj.textureName,
+			count = textureName.length,
+			url = obj.textureUrl,
+			l = count,
+			i = 0,
+			a = [];
+		for (; i < l; i++) {
+			(function (i) {
+				// Create a texture object
+				a[i] = gl.createTexture();
+
+				// Get the storage location of u_Sampler
+				var u_Sampler = gl.getUniformLocation(gl.program, textureName[i]);
+
+				// Create the image object
+				var image = new Image();
+				image.onload = function () {
+					count--;
+					loadImage(gl, a[i], u_Sampler, image, obj.fn, count, i);
+				};
+				image.src = url[i];
+			})(i);
+		}
+
+		return a;
+	}
+
+	// creat FramebufferObject
+	function createFramebuffer(obj) {
+		var gl=obj.gl,
+			offScreenWidth=obj.offScreenWidth,
+			offScreenHeight=obj.offScreenHeight;
+		var framebuffer, texture, depthBuffer;
+
+		// Define the error handling function
+		var error = function () {
+			if (framebuffer){
+				gl.deleteFramebuffer(framebuffer);	
+			}
+			if (texture){
+				gl.deleteTexture(texture);	
+			} 
+			if (depthBuffer){
+				gl.deleteRenderbuffer(depthBuffer);	
+			} 
+			return null;
+		};
+
+		// Create a frame buffer object (FBO)
+		framebuffer = gl.createFramebuffer();
+		if (!framebuffer) {
+			console.log('Failed to create frame buffer object');
+			return error();
+		}
+
+		// Create a texture object and set its size and parameters
+		texture = gl.createTexture(); // Create a texture object
+		if (!texture) {
+			console.log('Failed to create texture object');
+			return error();
+		}
+		gl.bindTexture(gl.TEXTURE_2D, texture); // Bind the object to target
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, offScreenWidth, offScreenHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		framebuffer.texture = texture; // Store the texture object
+
+		// Create a renderbuffer object and Set its size and parameters
+		depthBuffer = gl.createRenderbuffer(); // Create a renderbuffer object
+		if (!depthBuffer) {
+			console.log('Failed to create renderbuffer object');
+			return error();
+		}
+		gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer); // Bind the object to target
+		gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, offScreenWidth, offScreenHeight);
+
+		// Attach the texture and the renderbuffer object to the FBO
+		gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+		gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+
+		// Check if FBO is configured correctly
+		var e = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+		if (gl.FRAMEBUFFER_COMPLETE !== e) {
+			console.log('Frame buffer object is incomplete: ' + e.toString());
+			return error();
+		}
+
+		// Unbind the buffer object
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+		gl.bindTexture(gl.TEXTURE_2D, null);
+		gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
+
+		return framebuffer;
+	}
+
 	// load texture
 	function loadTexture(gl, texture, u_Sampler, image, fn, count, i) {
 
@@ -1019,10 +1341,10 @@
 			i = 0,
 			l = 0,
 			size = data.BYTES_PER_ELEMENT;
-		if(glBuffer.verticesBuffer){
-			buffer=glBuffer.verticesBuffer;
-		}else{
-			buffer=glBuffer.verticesBuffer=gl.createBuffer();
+		if (glBuffer.verticesBuffer) {
+			buffer = glBuffer.verticesBuffer;
+		} else {
+			buffer = glBuffer.verticesBuffer = gl.createBuffer();
 		}
 		if (!buffer) {
 			console.log('Failed to create the buffer object');
@@ -1038,8 +1360,8 @@
 		if (typeof obj.dataLength === 'number') {
 
 			a_Position = gl.getAttribLocation(gl.program, obj.positionName);
-			if(!a_Position){
-				console.log('Failed to get the '+obj.positionName+' location');
+			if (!a_Position) {
+				console.log('Failed to get the ' + obj.positionName + ' location');
 				return;
 			}
 			// Assign the buffer object to a_Position variable
@@ -1052,15 +1374,15 @@
 			l = obj.positionName.length;
 			for (i = 0; i < l; i++) {
 				a_Position = gl.getAttribLocation(gl.program, obj.positionName[i]);
-				if(a_Position<0){
-					console.log('Failed to get the '+obj.positionName[i]+' location');
-				}else{
+				if (a_Position < 0) {
+					console.log('Failed to get the ' + obj.positionName[i] + ' location');
+				} else {
 					// Assign the buffer object to a_Position variable
 					gl.vertexAttribPointer(a_Position, obj.dataLength[i], obj.dataType || gl.FLOAT, false, size * obj.stride, size * obj.offset[i]);
 
 					// Enable the assignment to a_Position variable
 					gl.enableVertexAttribArray(a_Position);
-				}					
+				}
 			}
 		}
 
@@ -1068,87 +1390,38 @@
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	}
 
-	// cube data
-	//    v6----- v5
-	//   /|      /|
-	//  v1------v0|
-	//  | |     | |
-	//  | |v7---|-|v4
-	//  |/      |/
-	//  v2------v3
-	var cubeVertices = [ // Vertex coordinates
-		0.5, 0.5, 0.5, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 
-		-0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-		-0.5, -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-		0.5, -0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, // v0-v1-v2-v3 front
-
-		0.5, 0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-		0.5, -0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-		0.5, -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-		0.5, 0.5, -0.5, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // v0-v3-v4-v5 right
-
-		0.5, 0.5, 0.5, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-		0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 
-		-0.5, 0.5, -0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 
-		-0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, // v0-v5-v6-v1 up
-
-		-0.5, 0.5, 0.5, 1.0, 1.0, 0.0, -1.0, 0.0, 0.0,
-		-0.5, 0.5, -0.5, 0.0, 1.0, 0.0, -1.0, 0.0, 0.0,
-		-0.5, -0.5, -0.5, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0,
-		-0.5, -0.5, 0.5, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, // v1-v6-v7-v2 left
-
-		-0.5, -0.5, -0.5, 1.0, 1.0, 0.0, 0.0, -1.0, 0.0,
-		0.5, -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0,
-		0.5, -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 
-		-0.5, -0.5, 0.5, 1.0, 0.0, 0.0, 0.0, -1.0, 0.0, // v7-v4-v3-v2 down
-
-		0.5, -0.5, -0.5, 1.0, 1.0, 0.0, 0.0, 0.0, -1.0,
-		-0.5, -0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0,
-		-0.5, 0.5, -0.5, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0,
-		0.5, 0.5, -0.5, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0 // v4-v7-v6-v5 back
-	];
-
-	var cubeIndices = new Uint8Array([ // Indices of the vertices
-		0, 1, 2, 0, 2, 3, // front
-		4, 5, 6, 4, 6, 7, // right
-		8, 9, 10, 8, 10, 11, // up
-		12, 13, 14, 12, 14, 15, // left
-		16, 17, 18, 16, 18, 19, // down
-		20, 21, 22, 20, 22, 23 // back
-	]);
-
 	function createCube(obj, fn) {
 		var gl = obj.gl,
 			vertices = cubeVertices.slice(),
 			indexBuffer,
-			w=obj.width||1,
-			h=obj.height||1,
-			l=obj.length||1,
-			length=cubeVertices.length,
-			i=0;
-		
-		if(glBuffer.verticesBuffer){
-			indexBuffer=glBuffer.indexBuffer;
-		}else{
-			indexBuffer=glBuffer.indexBuffer=gl.createBuffer();
+			w = obj.width || 1,
+			h = obj.height || 1,
+			l = obj.length || 1,
+			length = cubeVertices.length,
+			i = 0;
+
+		if (glBuffer.verticesBuffer) {
+			indexBuffer = glBuffer.indexBuffer;
+		} else {
+			indexBuffer = glBuffer.indexBuffer = gl.createBuffer();
 		}
-		if(w!==1){
-			for(i=0;i<length;i+=9){
-				vertices[i]*=w;
+		if (w !== 1) {
+			for (i = 0; i < length; i += 9) {
+				vertices[i] *= w;
 			}
 		}
-		if(h!==1){
-			for(i=1;i<length;i+=9){
-				vertices[i]*=h;
+		if (h !== 1) {
+			for (i = 1; i < length; i += 9) {
+				vertices[i] *= h;
 			}
 		}
-		if(l!==1){
-			for(i=2;i<length;i+=9){
-				vertices[i]*=l;
+		if (l !== 1) {
+			for (i = 2; i < length; i += 9) {
+				vertices[i] *= l;
 			}
 		}
-		vertices=new Float32Array(vertices);
-		
+		vertices = new Float32Array(vertices);
+
 		fn({
 			gl: gl,
 			data: vertices,
@@ -1159,23 +1432,23 @@
 		});
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cubeIndices, gl.STATIC_DRAW);
-		
-		if(obj.viewMatrixLocation){
-			gl.uniformMatrix4fv(obj.viewMatrixLocation,false,obj.viewMatrix.elements);
-			gl.uniformMatrix4fv(obj.normalMatrixLocation,false,obj.normalMatrix.elements);
 
-			gl.drawElements(gl.TRIANGLES,cubeIndices.length, gl.UNSIGNED_BYTE, 0);
+		if (obj.viewMatrixLocation) {
+			gl.uniformMatrix4fv(obj.viewMatrixLocation, false, obj.viewMatrix.elements);
+			gl.uniformMatrix4fv(obj.normalMatrixLocation, false, obj.normalMatrix.elements);
+
+			gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_BYTE, 0);
 		}
 		return cubeIndices.length;
 	}
-	
-	function drawCube(obj){
-		var gl=obj.gl;
-		
-		gl.uniformMatrix4fv(obj.viewMatrixLocation,false,obj.viewMatrix.elements);
-		gl.uniformMatrix4fv(obj.normalMatrixLocation,false,obj.normalMatrix.elements);
 
-		gl.drawElements(gl.TRIANGLES,cubeIndices.length, gl.UNSIGNED_BYTE, 0);
+	function drawCube(obj) {
+		var gl = obj.gl;
+
+		gl.uniformMatrix4fv(obj.viewMatrixLocation, false, obj.viewMatrix.elements);
+		gl.uniformMatrix4fv(obj.normalMatrixLocation, false, obj.normalMatrix.elements);
+
+		gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_BYTE, 0);
 	}
 
 	// sphere data
@@ -1200,12 +1473,12 @@
 				positions.push(si * sj); // X
 				positions.push(cj); // Y
 				positions.push(ci * sj); // Z
-				
+
 				// texture
-				positions.push(i/n); // x
-				positions.push(n-j/n); // y
+				positions.push(i / n); // x
+				positions.push(n - j / n); // y
 				positions.push(1.0); // z
-				
+
 				// normal
 				positions.push(si * sj); // X
 				positions.push(cj); // Y
@@ -1229,23 +1502,23 @@
 			}
 		}
 		return {
-			positions:positions,
-			indices:indices
+			positions: positions,
+			indices: indices
 		};
 	}
-	
-	function createSphere(obj,sphereData,createPointsData){
-		
+
+	function createSphere(obj, sphereData, createPointsData) {
+
 		var gl = obj.gl,
-			data= sphereData(obj.length),
+			data = sphereData(obj.length),
 			indexBuffer = gl.createBuffer();
 		createPointsData({
 			gl: gl,
 			data: new Float32Array(data.positions),
-			dataLength: obj.dataLength || [3, 2,3],
+			dataLength: obj.dataLength || [3, 2, 3],
 			positionName: obj.positionName,
 			stride: obj.stride || 9,
-			offset: obj.offset || [0, 3,6]
+			offset: obj.offset || [0, 3, 6]
 		});
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.indices), gl.STATIC_DRAW);
@@ -1269,25 +1542,32 @@
 		matrix4: Matrix4,
 		vector3: Vector3,
 		vector4: Vector4,
+		createCubeBuffers: createCubeBuffers,
+		createPlaneBuffers: createPlaneBuffers,
+		createTextures: function (obj) {
+			return createTextures(obj, loadImage);
+		},
+		createFramebuffer:createFramebuffer,
+		linkBuffers:linkBuffers,
 		createPointsData: createPointsData,
 		createCube: function (obj) {
 			return createCube(obj, createPointsData);
 		},
-		drawCube:drawCube,
-		createSphere:function(obj){
-			return createSphere(obj,sphereData,createPointsData);
+		drawCube: drawCube,
+		createSphere: function (obj) {
+			return createSphere(obj, sphereData, createPointsData);
 		},
 		initTextures: function (obj) {
 			initTextures(obj, loadTexture);
 		},
-		createProgram:function initShaders(gl, vshader, fshader,tip) {
+		createProgram: function (gl, vshader, fshader, tip) {
 			var program = createProgram(gl, vshader, fshader);
 			if (!program) {
 				console.log('Failed to create program');
 				return false;
 			}
 
-			if(tip){
+			if (tip) {
 				gl.useProgram(program);
 			}
 

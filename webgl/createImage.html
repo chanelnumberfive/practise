@@ -1,0 +1,150 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+* {
+	padding: 0;
+	margin: 0;
+}
+body {
+	background-color: #222;
+}
+canvas {
+	display: block;
+	margin: 0 auto;
+}
+</style>
+</head>
+
+<body style="height:100%;">
+<canvas id="canvas"></canvas>
+<script type="application/javascript" src="../js/jquery-3.2.1.min.js"></script> 
+<script type="application/javascript" src="../js/blz-webgl.js"></script> 
+<script type="application/javascript">
+	+function(){
+		'use strict';
+		
+		var elem=document.getElementById('canvas');
+		elem.width=window.innerHeight;
+		elem.height=window.innerHeight;
+		
+		var tool=$.blz;
+		var shape=''+
+		'#version 100\n'+	
+		'attribute vec4 a_position;\n'+
+		'attribute float a_size;\n'+
+		'attribute vec2 a_color;\n'+
+		'varying vec2 v_color;\n'+
+		'uniform mat4 viewMatrix;\n'+	
+		'void main(){\n'+
+			'gl_Position=viewMatrix*a_position;\n'+
+			'v_color=a_color;\n'+
+		'}\n',
+		color=''+
+		'#version 100\n'+	
+		'#ifdef GL_ES\n' +
+		'precision mediump float;\n' +
+		'#endif\n' +
+		'uniform sampler2D u_sampler0;\n'+	
+		'uniform sampler2D u_sampler1;\n'+	
+		'varying vec2 v_color;\n'+	
+		'void main(){\n'+
+			'vec4 v_color0=texture2D(u_sampler0,v_color);\n'+
+			'vec4 v_color1=texture2D(u_sampler1,v_color);\n'+
+			'gl_FragColor=v_color0;\n'+	
+		'}\n',
+		gl=tool.initWebGl(elem);
+		
+		tool.initShaders(gl,shape,color);
+		
+		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix');
+		var viewMatrix=new tool.matrix4();
+		viewMatrix.setPerspective(45,1/1,1,100).lookAt(4,4,4, 0, 0, 0, 0, 1, 0);
+		var viewMatrix2=new tool.matrix4();
+		viewMatrix2.setPerspective(45,1/1,1,100).lookAt(4,4,4, 0, 0, 0, 0, 1, 0);
+		gl.clearColor(0.0, 0.0, 0.0, 1.0);
+		
+		var cubeBuffers=tool.createCubeBuffers({
+				gl:gl,
+				attributeName:['a_position','a_color'],
+				height:2,
+				width:2,
+				length:2
+			}),
+			planeBuffers=tool.createPlaneBuffers({
+				gl:gl,
+				attributeName:['a_position','a_color'],
+				width:2,
+				height:2
+			}),
+			textures=tool.createTextures({
+				gl:gl,
+				textureName:['u_sampler0','u_sampler1'],
+				textureUrl:[
+					'../images/child.jpg',
+					'../images/child.png'
+				],
+				fn:function(){
+					console.log(textures);
+					draw();
+				}
+			}),
+			fbo =tool.createFramebuffer({
+				gl:gl,
+				offScreenHeight:256,
+				offScreenWidth:256
+			});
+		
+		gl.enable(gl.DEPTH_TEST);
+		
+		function draw() {
+		  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);              // Change the drawing destination to FBO
+		  gl.viewport(0, 0, 256, 256); // Set a viewport for FBO
+
+		  gl.clearColor(0.2, 0.2, 0.4, 1.0); // Set clear color (the color is slightly changed)
+		  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  // Clear FBO
+
+		  drawCube();   // Draw the cube
+
+		  gl.bindFramebuffer(gl.FRAMEBUFFER, null);        // Change the drawing destination to color buffer
+		  gl.viewport(0, 0, canvas.width, canvas.height);  // Set the size of viewport back to that of <canvas>
+
+		  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+		  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); // Clear the color buffer
+
+		  drawPlane();  // Draw the plane
+		  requestAnimationFrame(draw);
+		}
+		
+		function drawCube(){
+			viewMatrix.rotate(0.1,0,1,0);
+			var n=tool.linkBuffers(cubeBuffers);
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, textures[0]);
+			gl.activeTexture(gl.TEXTURE1);
+			gl.bindTexture(gl.TEXTURE_2D, textures[1]);
+			
+			gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix.elements);
+			gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
+			
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+		}
+		function drawPlane(){
+			viewMatrix2.rotate(-0.1,0,1,0);
+			var n=tool.linkBuffers(planeBuffers);
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, fbo.texture);
+			
+			gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix2.elements);
+			gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
+			
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+		}
+	}();
+</script>
+</body>
+</html>

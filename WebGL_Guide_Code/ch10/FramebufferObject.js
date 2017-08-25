@@ -24,13 +24,13 @@ var FSHADER_SOURCE =
 // Size of off screen
 var OFFSCREEN_WIDTH = 256;
 var OFFSCREEN_HEIGHT = 256;
-
+var gl;
 function main() {
   // Retrieve <canvas> element
   var canvas = document.getElementById('webgl');
 
   // Get the rendering context for WebGL
-  var gl = getWebGLContext(canvas);
+  gl = getWebGLContext(canvas);
   if (!gl) {
     console.log('Failed to get the rendering context for WebGL');
     return;
