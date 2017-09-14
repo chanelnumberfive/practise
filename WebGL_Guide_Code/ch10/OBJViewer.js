@@ -28,7 +28,8 @@ var FSHADER_SOURCE =
 function main() {
   // Retrieve <canvas> element
   var canvas = document.getElementById('webgl');
-
+  canvas.height=window.innerHeight;
+  canvas.width=window.innerWidth;
   // Get the rendering context for WebGL
   var gl = getWebGLContext(canvas);
   if (!gl) {
@@ -70,7 +71,7 @@ function main() {
   // ビュー投影行列を計算
   var viewProjMatrix = new Matrix4();
   viewProjMatrix.setPerspective(30.0, canvas.width/canvas.height, 1.0, 5000.0);
-  viewProjMatrix.lookAt(0.0, 500.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  viewProjMatrix.lookAt(0.0, 1000.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
   // Start reading the OBJ file
   readOBJFile('mycouch.obj', gl, model, 60, true);
