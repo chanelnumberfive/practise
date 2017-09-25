@@ -73,7 +73,7 @@ function main() {
   viewProjMatrix.lookAt(0.0, 500.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
   // Start reading the OBJ file
-  readOBJFile('mycouch.obj', gl, model, 60, true);
+  readOBJFile('cube.obj', gl, model, 60, true);
 
   var currentAngle = 0.0; // Current rotation angle [degree]
   var tick = function() {   // Start drawing
@@ -122,7 +122,7 @@ function readOBJFile(fileName, gl, model, scale, reverse) {
     }
   }
   request.open('GET', fileName, true); // Create a request to acquire the file
-  request.send();                      // Send the request
+  request.send(null);                      // Send the request
 }
 
 var g_objDoc = null;      // The information of OBJ file

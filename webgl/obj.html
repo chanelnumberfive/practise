@@ -1,0 +1,83 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+* {
+	padding: 0;
+	margin: 0;
+}
+body {
+	background-color: #222;
+}
+canvas {
+	display: block;
+	margin: 0 auto;
+}
+</style>
+</head>
+
+<body style="height:100%;">
+<canvas id="canvas"></canvas>
+<script type="application/javascript" src="../js/jquery-3.2.1.min.js"></script> 
+<script type="application/javascript" src="../js/blz-webgl.js"></script> 
+<script type="application/javascript">
+	+function(){
+		'use strict';
+		
+		var elem=document.getElementById('canvas');
+		elem.width=window.innerHeight;
+		elem.height=window.innerHeight;
+		
+		var tool=$.blz;
+		var shape=''+
+		'#version 100\n'+	
+		'attribute vec4 a_position;\n'+
+		'attribute float a_size;\n'+
+		'attribute vec2 a_texCoord;\n'+
+		'varying vec2 v_texCoord;\n'+
+		'uniform mat4 matrix;\n'+	
+		'void main(){\n'+
+			'gl_Position=a_position;\n'+
+		'}\n',
+		color=''+
+		'#version 100\n'+	
+		'#ifdef GL_ES\n' +
+		'precision mediump float;\n' +
+		'#endif\n' +	
+		'void main(){\n'+
+			'gl_FragColor=vec4(1.0,0.0,0.0,1.0);\n'+	
+		'}\n',
+		gl=tool.initWebGl(elem);
+		
+		tool.initShaders(gl,shape,color);
+		
+		$.ajax({
+			url:'../model/cube.json',
+			dataType:'html',
+			success:function(data){
+				var obj= new tool.AnalysisObj({
+					data:data,
+					scale:60,
+					reverse:true,
+					mtlPathFn:function(path){
+						return '../model/'+path.replace('.mtl','mtl.json');
+					},
+					fn:
+				});
+			},
+			error:function(xhr,state){
+				console.log('error'+state);
+			}
+		});
+		function handleResize(){
+			elem.width=window.innerWidth;
+			elem.height=window.innerHeight;
+		}
+	
+		//window.addEventListener('resize',handleResize);
+	}();
+</script>
+</body>
+</html>

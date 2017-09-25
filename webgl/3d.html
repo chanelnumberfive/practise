@@ -74,8 +74,8 @@ canvas {
 			gl:gl,
 			textureName:['u_sampler0','u_sampler1'],
 			textureUrl:[
-				'http://192.168.1.173:1234/webgl-practise/images/child.jpg',
-				'http://192.168.1.173:1234/webgl-practise/images/child.png'
+				'../images/child.jpg',
+				'../images/child.png'
 			],
 			fn:init
 		});
@@ -103,7 +103,6 @@ canvas {
 			matrix1.translate(-1,0,0);
 			requestAnimationFrame(init);
 		}
-		init();
 		
 		function handleResize(){
 			elem.width=window.innerWidth;

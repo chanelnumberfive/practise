@@ -66,8 +66,8 @@ WebGLUtils = function() {
  * @return {string} The html.
  */
 var makeFailHTML = function(msg) {
-  return '' +
-        '<div style="margin: auto; width:500px;z-index:10000;margin-top:20em;text-align:center;">' + msg + '</div>';
+  //return '' +
+//        '<div style="margin: auto; width:500px;z-index:10000;margin-top:20em;text-align:center;">' + msg + '</div>';
   return '' +
     '<table style="background-color: #8CE; width: 100%; height: 100%;"><tr>' +
     '<td align="center">' +
