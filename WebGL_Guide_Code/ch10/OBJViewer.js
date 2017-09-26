@@ -28,7 +28,8 @@ var FSHADER_SOURCE =
 function main() {
   // Retrieve <canvas> element
   var canvas = document.getElementById('webgl');
-
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;	
   // Get the rendering context for WebGL
   var gl = getWebGLContext(canvas);
   if (!gl) {
@@ -69,7 +70,7 @@ function main() {
 
   // ビュー投影行列を計算
   var viewProjMatrix = new Matrix4();
-  viewProjMatrix.setPerspective(30.0, canvas.width/canvas.height, 1.0, 5000.0);
+  viewProjMatrix.setPerspective(30.0, window.innerWidth/window.innerHeight, 1.0, 5000.0);
   viewProjMatrix.lookAt(300.0, 300.0, 300.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
   // Start reading the OBJ file
