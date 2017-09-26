@@ -34,24 +34,56 @@ canvas {
 		var shape=''+
 		'#version 100\n'+	
 		'attribute vec4 a_position;\n'+
-		'attribute float a_size;\n'+
-		'attribute vec2 a_texCoord;\n'+
-		'varying vec2 v_texCoord;\n'+
-		'uniform mat4 matrix;\n'+	
+		'attribute vec4 a_color;\n'+
+		'attribute vec4 a_normal;\n'+
+		'varying vec4 v_color;\n'+
+		'uniform mat4 u_matrix;\n'+	
+		'uniform mat4 u_normalMatrix;\n'+	
 		'void main(){\n'+
-			'gl_Position=a_position;\n'+
+		'  vec3 lightDirection = vec3(-0.35, 0.35, 0.87);\n' +
+		'  gl_Position = u_matrix * a_position;\n' +
+		'  vec3 normal = normalize(vec3(u_normalMatrix * a_normal));\n' +
+		'  float nDotL = max(dot(normal, lightDirection), 0.0);\n' +
+		'  v_color = vec4(a_color.rgb * nDotL, a_color.a);\n' +
 		'}\n',
 		color=''+
 		'#version 100\n'+	
 		'#ifdef GL_ES\n' +
 		'precision mediump float;\n' +
-		'#endif\n' +	
+		'#endif\n' +
+		'varying vec4 v_color;\n' +	
 		'void main(){\n'+
-			'gl_FragColor=vec4(1.0,0.0,0.0,1.0);\n'+	
+			'gl_FragColor=vec4(v_color.r+0.2,v_color.g+0.2,v_color.b+0.2,v_color.a);\n'+	
 		'}\n',
 		gl=tool.initWebGl(elem);
 		
 		tool.initShaders(gl,shape,color);
+		
+		gl.clearColor(0.2, 0.2, 0.2, 1.0);
+  		gl.enable(gl.DEPTH_TEST);
+		
+		// Get the storage locations of attribute and uniform variables
+		var program = gl.program;
+		program.a_position = gl.getAttribLocation(program, 'a_position');
+		program.a_normal = gl.getAttribLocation(program, 'a_normal');
+		program.a_color = gl.getAttribLocation(program, 'a_color');
+		program.u_matrix = gl.getUniformLocation(program, 'u_matrix');
+		program.u_normalMatrix = gl.getUniformLocation(program, 'u_normalMatrix');
+
+		if (program.a_position < 0 ||  program.a_normal < 0 || program.a_color < 0 ||
+			!program.u_matrix || !program.u_normalMatrix) {
+			console.log('attribute, uniform获取失败'); 
+			return;
+		}
+		
+		var buffers=initVertexBuffers(gl,program);
+		
+		var matrix = new tool.Matrix4(),
+			viewMatrix = new tool.Matrix4(),
+			normalMatrix = new tool.Matrix4(),
+			modelMatrix=new tool.Matrix4();
+	    viewMatrix.setPerspective(30.0, canvas.width/canvas.height, 1.0, 5000.0);
+	    viewMatrix.lookAt(0.0, 500.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 		
 		$.ajax({
 			url:'../model/cube.json',
@@ -64,13 +96,88 @@ canvas {
 					mtlPathFn:function(path){
 						return '../model/'+path.replace('.mtl','mtl.json');
 					},
-					fn:
+					fn:function(){
+						var info=obj.getDrawingInfo();
+						linkData(gl, buffers, info);
+						draw(gl, program,0,info);
+					}
 				});
 			},
 			error:function(xhr,state){
 				console.log('error'+state);
 			}
 		});
+		
+		function initVertexBuffers(gl, program) {
+			var o ={};
+			o.vertexBuffer = createEmptyArrayBuffer(gl, program.a_Position, 3, gl.FLOAT); 
+			o.normalBuffer = createEmptyArrayBuffer(gl, program.a_Normal, 3, gl.FLOAT);
+			o.colorBuffer = createEmptyArrayBuffer(gl, program.a_Color, 4, gl.FLOAT);
+			o.indexBuffer = gl.createBuffer();
+			if (!o.vertexBuffer || !o.normalBuffer || !o.colorBuffer || !o.indexBuffer) { 
+				console.log('failed to create buffer');
+				return null;
+			}
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+			return o;
+		}
+		
+		function createEmptyArrayBuffer(gl, a_attribute, num, type) {
+			var buffer =  gl.createBuffer(); 
+			if (!buffer) {
+				console.log('Failed to create the buffer object');
+				return null;
+			}
+			gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+			gl.vertexAttribPointer(a_attribute, num, type, false, 0, 0); 
+			gl.enableVertexAttribArray(a_attribute);  
+
+			return buffer;
+		}
+		
+		function linkData(gl, model, drawingInfo) {
+			
+			// Write date into the buffer object
+			gl.bindBuffer(gl.ARRAY_BUFFER, model.vertexBuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, drawingInfo.vertices, gl.STATIC_DRAW);
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, model.normalBuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, drawingInfo.normals, gl.STATIC_DRAW);
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, model.colorBuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, drawingInfo.colors, gl.STATIC_DRAW);
+
+			// Write the indices to the buffer object
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.indexBuffer);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, drawingInfo.indices, gl.STATIC_DRAW);
+
+			return drawingInfo;
+		}
+		
+		// draw
+		function draw(gl, program, angle,model) {
+
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  // Clear color and depth buffers
+
+			modelMatrix.setRotate(angle, 1.0, 0.0, 0.0);
+			modelMatrix.rotate(angle, 0.0, 1.0, 0.0);
+			modelMatrix.rotate(angle, 0.0, 0.0, 1.0);
+
+			normalMatrix.setInverseOf(modelMatrix);
+			normalMatrix.transpose();
+			gl.uniformMatrix4fv(program.u_normalMatrix, false, normalMatrix.elements);
+
+			// Calculate the model view project matrix and pass it to u_MvpMatrix
+			matrix.set(viewMatrix);
+			matrix.multiply(modelMatrix);
+			gl.uniformMatrix4fv(program.u_matrix, false, matrix.elements);
+
+			// Draw
+			gl.drawElements(gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
+		}
+		
 		function handleResize(){
 			elem.width=window.innerWidth;
 			elem.height=window.innerHeight;

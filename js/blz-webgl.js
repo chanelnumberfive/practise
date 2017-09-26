@@ -1353,14 +1353,11 @@
 
 		// Bind the buffer object to target
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-
 		// Write date into the buffer object
 		gl.bufferData(gl.ARRAY_BUFFER, data, drawMethod);
-
 		if (typeof obj.dataLength === 'number') {
-
 			a_Position = gl.getAttribLocation(gl.program, obj.positionName);
-			if (!a_Position) {
+			if (a_Position<0) {
 				console.log('Failed to get the ' + obj.positionName + ' location');
 				return;
 			}
@@ -1368,7 +1365,7 @@
 			gl.vertexAttribPointer(a_Position, obj.dataLength, obj.dataType || gl.FLOAT, false, size * (obj.stride || 0), size * (obj.offset || 0));
 
 			// Enable the assignment to a_Position variable
-			gl.enableVertexAttribArray(a_Position);
+			gl.enableVertexAttribArray(a_Position);	
 
 		} else {
 			l = obj.positionName.length;
@@ -1818,10 +1815,10 @@
 					indices[index_indices] = index_indices;
 					// Copy vertex
 					var vIdx = face.vIndices[k];
-					var vertex = this.vertices[vIdx];
-					vertices[index_indices * 3 + 0] = vertex.x;
-					vertices[index_indices * 3 + 1] = vertex.y;
-					vertices[index_indices * 3 + 2] = vertex.z;
+					var vertex = this.vertices[vIdx]||{};
+					vertices[index_indices * 3 + 0] = vertex.x||0;
+					vertices[index_indices * 3 + 1] = vertex.y||0;
+					vertices[index_indices * 3 + 2] = vertex.z||0;
 					// Copy color
 					colors[index_indices * 4 + 0] = color.r;
 					colors[index_indices * 4 + 1] = color.g;
@@ -1845,7 +1842,7 @@
 		}
 
 		return new DrawingInfo(vertices, normals, colors, indices);
-	}
+	};
 
 	//------------------------------------------------------------------------------
 	// MTLDoc Object
@@ -2027,7 +2024,6 @@
 		return v.elements;
 	}
 
-
 	$.blz = {
 		// webGl初始化
 		initWebGl: function (canvas) {
@@ -2040,9 +2036,9 @@
 			return context3d;
 		},
 		initShaders: initShaders,
-		matrix4: Matrix4,
-		vector3: Vector3,
-		vector4: Vector4,
+		Matrix4: Matrix4,
+		Vector3: Vector3,
+		Vector4: Vector4,
 		createCubeBuffers: createCubeBuffers,
 		createPlaneBuffers: createPlaneBuffers,
 		createTextures: function (obj) {
