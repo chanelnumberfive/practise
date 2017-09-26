@@ -70,10 +70,10 @@ function main() {
   // ビュー投影行列を計算
   var viewProjMatrix = new Matrix4();
   viewProjMatrix.setPerspective(30.0, canvas.width/canvas.height, 1.0, 5000.0);
-  viewProjMatrix.lookAt(0.0, 500.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+  viewProjMatrix.lookAt(300.0, 300.0, 300.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
   // Start reading the OBJ file
-  readOBJFile('lady.obj', gl, model, 60, true);
+  readOBJFile('lady.json', gl, model, 1, true);
 
   var currentAngle = 0.0; // Current rotation angle [degree]
   var tick = function() {   // Start drawing
@@ -155,9 +155,9 @@ function draw(gl, program, angle, viewProjMatrix, model) {
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);  // Clear color and depth buffers
 
-  g_modelMatrix.setRotate(angle, 1.0, 0.0, 0.0); // 適当に回転
-  g_modelMatrix.rotate(angle, 0.0, 1.0, 0.0);
-  g_modelMatrix.rotate(angle, 0.0, 0.0, 1.0);
+  g_modelMatrix.setRotate(angle, 0.0, 1.0, 0.0); // 適当に回転
+  //g_modelMatrix.rotate(angle, 0.0, 1.0, 0.0);
+  //g_modelMatrix.rotate(angle, 0.0, 0.0, 1.0);
 
   // Calculate the normal transformation matrix and pass it to u_NormalMatrix
   g_normalMatrix.setInverseOf(g_modelMatrix);
@@ -255,7 +255,7 @@ OBJDoc.prototype.parse = function(fileString, scale, reverse) {
           }
         }
       }
-      request.open('GET', path, true);  // Create a request to acquire the file
+      request.open('GET', path.replace('.mtl','mtl.json'), true);  // Create a request to acquire the file
       request.send();                   // Send the request
       continue; // Go to the next line
     case 'o':

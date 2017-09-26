@@ -86,7 +86,7 @@ canvas {
 	    viewMatrix.lookAt(300.0, 300.0, 300.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 		
 		$.ajax({
-			url:'../model/lady.json',
+			url:'../model/lady.obj',
 			dataType:'html',
 			success:function(data){
 				var obj= new tool.AnalysisObj({
@@ -94,7 +94,8 @@ canvas {
 					scale:1,
 					reverse:true,
 					mtlPathFn:function(path){
-						return '../model/'+path.replace('.mtl','mtl.json');
+						//return '../model/'+path.replace('.mtl','mtl.json');
+						return path;
 					},
 					fn:function(){
 						var info=obj.getDrawingInfo();
