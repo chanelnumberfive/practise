@@ -1815,10 +1815,10 @@
 					indices[index_indices] = index_indices;
 					// Copy vertex
 					var vIdx = face.vIndices[k];
-					var vertex = this.vertices[vIdx]||{};
-					vertices[index_indices * 3 + 0] = vertex.x||0;
-					vertices[index_indices * 3 + 1] = vertex.y||0;
-					vertices[index_indices * 3 + 2] = vertex.z||0;
+					var vertex = this.vertices[vIdx];
+					vertices[index_indices * 3 + 0] = vertex.x;
+					vertices[index_indices * 3 + 1] = vertex.y;
+					vertices[index_indices * 3 + 2] = vertex.z;	
 					// Copy color
 					colors[index_indices * 4 + 0] = color.r;
 					colors[index_indices * 4 + 1] = color.g;

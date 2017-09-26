@@ -83,15 +83,15 @@ canvas {
 			normalMatrix = new tool.Matrix4(),
 			modelMatrix=new tool.Matrix4();
 	    viewMatrix.setPerspective(30.0, canvas.width/canvas.height, 1.0, 5000.0);
-	    viewMatrix.lookAt(0.0, 500.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	    viewMatrix.lookAt(300.0, 300.0, 300.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 		
 		$.ajax({
-			url:'../model/cube.json',
+			url:'../model/lady.json',
 			dataType:'html',
 			success:function(data){
 				var obj= new tool.AnalysisObj({
 					data:data,
-					scale:60,
+					scale:1,
 					reverse:true,
 					mtlPathFn:function(path){
 						return '../model/'+path.replace('.mtl','mtl.json');
@@ -110,9 +110,9 @@ canvas {
 		
 		function initVertexBuffers(gl, program) {
 			var o ={};
-			o.vertexBuffer = createEmptyArrayBuffer(gl, program.a_Position, 3, gl.FLOAT); 
-			o.normalBuffer = createEmptyArrayBuffer(gl, program.a_Normal, 3, gl.FLOAT);
-			o.colorBuffer = createEmptyArrayBuffer(gl, program.a_Color, 4, gl.FLOAT);
+			o.vertexBuffer = createEmptyArrayBuffer(gl, program.a_position, 3, gl.FLOAT); 
+			o.normalBuffer = createEmptyArrayBuffer(gl, program.a_normal, 3, gl.FLOAT);
+			o.colorBuffer = createEmptyArrayBuffer(gl, program.a_color, 4, gl.FLOAT);
 			o.indexBuffer = gl.createBuffer();
 			if (!o.vertexBuffer || !o.normalBuffer || !o.colorBuffer || !o.indexBuffer) { 
 				console.log('failed to create buffer');
