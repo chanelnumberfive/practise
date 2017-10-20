@@ -114,16 +114,24 @@ function createEmptyArrayBuffer(gl, a_attribute, num, type) {
 }
 
 // Read a file
-function readOBJFile(fileName, gl, model, scale, reverse) {
-  var request = new XMLHttpRequest();
+//function readOBJFile(fileName, gl, model, scale, reverse) {
+//  var request = new XMLHttpRequest();
+//
+//  request.onreadystatechange = function() {
+//    if (request.readyState === 4 && request.status !== 404) {
+//      onReadOBJFile(request.responseText, fileName, gl, model, scale, reverse);
+//    }
+//  }
+//  request.open('GET', fileName, true); // Create a request to acquire the file
+//  request.send(null);                      // Send the request
+//}
 
-  request.onreadystatechange = function() {
-    if (request.readyState === 4 && request.status !== 404) {
-      onReadOBJFile(request.responseText, fileName, gl, model, scale, reverse);
-    }
-  }
-  request.open('GET', fileName, true); // Create a request to acquire the file
-  request.send(null);                      // Send the request
+function readOBJFile(fileName,gl,model,scale,reverse){
+	fetch('https://chanelnumberfive.github.io/wx/data/index.json').then(function(body){
+		return body.json();
+	}).then(function(body){
+		console.log(body);
+	});
 }
 
 var g_objDoc = null;      // The information of OBJ file

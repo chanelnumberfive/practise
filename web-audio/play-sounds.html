@@ -1,0 +1,106 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+* {
+	padding: 0;
+	margin: 0;
+}
+</style>
+</head>
+
+<body style="100%;overflow:hidden;">
+<button id="pause">pause</button>
+<button id="play">play</button>
+<button id="replay">replay</button>
+<label for="loop"><input type="checkbox" id="loop"></label>
+<script type="application/javascript">	
+(function(){
+	'use strict';
+	
+	var audioCtx=new AudioContext(),
+		url=[
+			'../music/closetoyou.mp3',
+			'../music/manbu.mp3'
+		],
+		source1,
+		source2;
+	
+	bufferLoader(audioCtx,url,playSound);
+	
+	function playSound(buffers){
+		source1=audioCtx.createBufferSource();
+		source2=audioCtx.createBufferSource();
+		var gain1=audioCtx.createGain();
+		source1.buffer=buffers[0];
+		source2.buffer=buffers[1];
+		source1.connect(gain1);
+		gain1.connect(audioCtx.destination);
+		source2.connect(audioCtx.destination);
+		//gain1.gain.value=0.8;
+		//source1.playbackRate.value=5;
+		source1.start(0);
+		source2.loop=true;
+		for(var i in source1){
+			console.log(i);
+		}
+	}
+	
+	function bufferLoader(context,urls,fn){
+		var i=0,
+			l=urls.length,
+			xhr=[];
+		context.buffers=[];
+		for(i=0;i<l;i++){
+			xhr[i]=new XMLHttpRequest();
+			xhr[i].open('GET',urls[i],true);
+			xhr[i].responseType='arraybuffer';
+			xhr[i].onload=function(){
+				audioCtx.decodeAudioData(this.response,function(buffer){
+					context.buffers[context.buffers.length]=buffer;
+					if(context.buffers.length===urls.length){
+						fn(context.buffers);
+					}
+				},function(e){
+					console.log(e);
+				});
+			};
+			xhr[i].send(null);
+		}
+	}
+	window.addEventListener('ended',function(){
+		alert(1);
+	});
+	
+	document.getElementById('pause').addEventListener('click',function(){
+		source1.stop();
+		audioCtx.blzCurrentTime=audioCtx.currentTime;
+	},true);
+	document.getElementById('play').addEventListener('click',function(){
+		source1.stop();
+		audioCtx.blzCurrentTime=audioCtx.currentTime;
+		source1=audioCtx.createBufferSource();
+		source1.buffer=audioCtx.buffers[0];
+		source1.connect(audioCtx.destination);
+		source1.start(0,audioCtx.blzCurrentTime%audioCtx.buffers[0].duration);
+	},true);
+	document.getElementById('replay').addEventListener('click',function(){
+		source1.stop();
+		source1=audioCtx.createBufferSource();
+		source1.buffer=audioCtx.buffers[0];
+		source1.connect(audioCtx.destination);
+		source1.start(0);
+	},true);
+	document.getElementById('loop').addEventListener('input',function(){
+		if(this.checked){
+			source1.loop=true;
+		}else{
+			source1.loop=false;
+		}
+	},true);
+})();
+</script>
+</body>
+</html>

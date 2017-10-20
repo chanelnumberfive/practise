@@ -81,16 +81,16 @@ canvas {
 		tool.initShaders(gl,shape,color);
 		
 		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix');
-		var viewMatrix=new tool.matrix4(),
-			baseViewMatrix=new tool.matrix4();
+		var viewMatrix=new tool.Matrix4(),
+			baseViewMatrix=new tool.Matrix4();
 		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,100.0).lookAt(1.8,1.8,1.8, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 		
 		var normalMatrixLocation=gl.getUniformLocation(gl.program, 'normalMatrix'),
-			normalMatrix=new tool.matrix4(),
-			modelMatrix=new tool.matrix4();
+			normalMatrix=new tool.Matrix4(),
+			modelMatrix=new tool.Matrix4();
 		
 		var u_lightDirection = gl.getUniformLocation(gl.program, 'u_lightDirection');
-		var lightDirection = new tool.vector3([0.0, 0.0, 4.0]);
+		var lightDirection = new tool.Vector3([0.0, 0.0, 4.0]);
 		lightDirection.normalize();     // Normalize
 		gl.uniform3fv(u_lightDirection, lightDirection.elements);
 		
@@ -164,10 +164,10 @@ canvas {
 			x=x1;
 			y=y1;
 		}
-		elem.addEventListener('mousedown',mousedown,false);
-		elem.addEventListener('touchstart',mousedown,false);
-		elem.addEventListener('mousemove',mousemove,false);
-		elem.addEventListener('touchmove',mousemove,false);
+		//elem.addEventListener('mousedown',mousedown,false);
+		//elem.addEventListener('touchstart',mousedown,false);
+		//elem.addEventListener('mousemove',mousemove,false);
+		//elem.addEventListener('touchmove',mousemove,false);
 	}();
 </script>
 </body>

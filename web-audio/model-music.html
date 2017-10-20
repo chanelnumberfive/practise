@@ -1,0 +1,37 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+* {
+	padding: 0;
+	margin: 0;
+}
+</style>
+</head>
+
+<body style="100%;overflow:hidden;">
+<button id="pause">pause</button>
+<button id="play">play</button>
+<button id="replay">replay</button>
+<label for="loop"><input type="checkbox" id="loop"></label>
+<script type="application/javascript" src="music.js"></script>
+<script type="application/javascript">	
+(function(){
+	'use strict';
+	
+	var context={};
+	Object.defineProperty(context,'src',{
+		get:function(){
+			return this._src||'';
+		},
+		set:function(src){
+			this._src=src;
+		}
+	});
+	context.src;
+})();
+</script>
+</body>
+</html>

@@ -149,7 +149,7 @@
 		analyser.getByteFrequencyData(array);
 		var average = getAverageVolume(array);
 		
-		var array2=new Uint8Array(analyser.frequencyBinCount);
+		var array2=new Uint8Array(analyser2.frequencyBinCount);
 		analyser2.getByteFrequencyData(array2);
 		var average2 = getAverageVolume(array2);
 		
@@ -197,6 +197,14 @@
 		splitter.connect(analyser,0);
 		splitter.connect(analyser2,1);
 		sourceCode.connect(context.destination);
+		sourceCode.onended=function(){
+			if(count>=musicList.length){
+				count=0;
+				loadSound(musicList[count++]);
+			}else{
+				loadSound(musicList[count++]);
+			}
+		};
 	}
 	
 	function loadSound(url){
@@ -214,16 +222,6 @@
 	function playSound(buffer){
 		sourceCode.buffer=buffer;
 		sourceCode.start(0);
-		sourceCode.onended=function(){
-			if(count>=musicList.length){
-				count=0;
-				setupSound();
-				loadSound(musicList[count++]);
-			}else{
-				setupSound();
-				loadSound(musicList[count++]);
-			}
-		};
 	}
 	
     window.onload = init;
