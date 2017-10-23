@@ -84,7 +84,7 @@ canvas {
 		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix');
 		var viewMatrix=new tool.Matrix4(),
 			baseViewMatrix=new tool.Matrix4();
-		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,100.0).lookAt(0.002,0.002,0.002,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
+		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.003,100.0).lookAt(0.002,0.002,0.002,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
 		
 		var normalMatrixLocation=gl.getUniformLocation(gl.program, 'normalMatrix'),
 			normalMatrix=new tool.Matrix4(),
@@ -126,7 +126,7 @@ canvas {
 		function init(){
 			var now=+new Date();
 			gl.clear(gl.DEPTH_BUFFER_BIT|gl.COLOR_BUFFER_BIT);
-			modelMatrix.rotate((now-time)/100,0,1,0);
+			//modelMatrix.rotate((now-time)/100,0,1,0);
 			viewMatrix.set(baseViewMatrix).multiply(modelMatrix);
 			normalMatrix.setInverseOf(modelMatrix);
 			normalMatrix.transpose();
@@ -151,7 +151,9 @@ canvas {
 			x1,
 			y1,
 			speed=10,
-			tip=false;
+			tip=false,
+			angelx=0,
+			angely=0;
 		function mousedown(e){
 			e=e.touches?e.touches[0]:e;
 			x=e.pageX;
@@ -162,12 +164,18 @@ canvas {
 			if(!tip){
 				return;
 			}
-			var dx,dy;
+			var dx,dy,value;
 			e=e.touches?e.touches[0]:e;
 			x1=e.pageX;
 			y1=e.pageY;
-			modelMatrix.rotate(-(x1-x)/speed,0,1,0);
-			modelMatrix.rotate(-(y1-y)/speed,1,0,0);
+			angelx+=-(x1-x)/speed;
+			angely+=-(y1-y)/speed;
+			angelx%=360;
+			angely%=360;
+			value=Math.sqrt(angelx*angelx+angely*angely);
+			if(value!=0){
+				modelMatrix.setRotate(value,angely/value,angelx/value,0);	
+			}
 			x=x1;
 			y=y1;
 		}
