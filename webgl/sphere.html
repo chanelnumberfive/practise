@@ -24,11 +24,19 @@ canvas {
 	left:0;
 	display: block;
 	margin: 0 auto;
+	z-index:10;
 }
+	input{
+		position:fixed;
+		right:20px;
+		top:20px;
+		z-index:100;
+	}
 </style>
 </head>
 
 <body style="height:100%;">
+<input id="range" type="range" value="30">
 <div class="box">
 	<canvas id="canvas"></canvas>
 </div>
@@ -84,7 +92,7 @@ canvas {
 		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix');
 		var viewMatrix=new tool.Matrix4(),
 			baseViewMatrix=new tool.Matrix4();
-		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.003,100.0).lookAt(0.002,0.002,0.002,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
+		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.003,100.0).lookAt(0,0,3,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
 		
 		var normalMatrixLocation=gl.getUniformLocation(gl.program, 'normalMatrix'),
 			normalMatrix=new tool.Matrix4(),
@@ -140,7 +148,7 @@ canvas {
 		function handleResize(){
 			elem.width=window.innerWidth;
 			elem.height=window.innerHeight;
-			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,100.0).lookAt(0.002,0.002,0.002,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
+			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,100.0).lookAt(0,0,0.002,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
 			gl.viewport(0,0,window.innerWidth,window.innerHeight);
 		}
 		window.addEventListener('resize',handleResize);
@@ -173,9 +181,8 @@ canvas {
 			angelx%=360;
 			angely%=360;
 			value=Math.sqrt(angelx*angelx+angely*angely);
-			if(value!=0){
-				modelMatrix.setRotate(value,angely/value,angelx/value,0);	
-			}
+			value=value==0?1:value;
+			modelMatrix.setRotate(value,angely/value,angelx/value,0);	
 			x=x1;
 			y=y1;
 		}
@@ -188,6 +195,11 @@ canvas {
 		elem.addEventListener('touchmove',mousemove,false);
 		elem.addEventListener('mouseup',mouseup,false);
 		elem.addEventListener('touchend',mouseup,false);
+		document.getElementById('range').addEventListener('input',function(e){
+			var value=this.value-0;
+			value=value*10/100;
+			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,100.0).lookAt(0,0,value,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
+		});
 	}();
 </script>
 </body>
