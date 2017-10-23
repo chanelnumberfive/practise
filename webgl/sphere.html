@@ -74,7 +74,8 @@ canvas {
 		'void main(){\n'+
 			'vec4 v_color0=texture2D(u_sampler0,v_textureCoord);\n'+
 			'vec4 v_color1=texture2D(u_sampler1,v_textureCoord);\n'+
-			'gl_FragColor=vec4(v_color0.rgb*v_color,1);\n'+	
+			//'gl_FragColor=vec4(v_color0.rgb*v_color,1);\n'+	
+			'gl_FragColor=v_color1;\n'+	
 		'}\n',
 		gl=tool.initWebGl(elem);
 		
@@ -83,7 +84,7 @@ canvas {
 		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix');
 		var viewMatrix=new tool.Matrix4(),
 			baseViewMatrix=new tool.Matrix4();
-		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,100.0).lookAt(1.8,1.8,1.8, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,100.0).lookAt(0.002,0.002,0.002,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
 		
 		var normalMatrixLocation=gl.getUniformLocation(gl.program, 'normalMatrix'),
 			normalMatrix=new tool.Matrix4(),
@@ -108,7 +109,7 @@ canvas {
 			textureName:['u_sampler0','u_sampler1'],
 			textureUrl:[
 				'../images/earthmap4k.jpg',
-				'../images/earthspec4k.jpg'
+				'../images/doliner.jpg'
 			],
 			fn:init
 		});
@@ -139,7 +140,7 @@ canvas {
 		function handleResize(){
 			elem.width=window.innerWidth;
 			elem.height=window.innerHeight;
-			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,1.0,10.0).lookAt(1.8,1.8,1.8, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,100.0).lookAt(0.002,0.002,0.002,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
 			gl.viewport(0,0,window.innerWidth,window.innerHeight);
 		}
 		window.addEventListener('resize',handleResize);
@@ -149,25 +150,36 @@ canvas {
 			y,
 			x1,
 			y1,
-			speed=10;
+			speed=10,
+			tip=false;
 		function mousedown(e){
 			e=e.touches?e.touches[0]:e;
 			x=e.pageX;
 			y=e.pageY;
+			tip=true;
 		}
 		function mousemove(e){
+			if(!tip){
+				return;
+			}
+			var dx,dy;
 			e=e.touches?e.touches[0]:e;
 			x1=e.pageX;
 			y1=e.pageY;
-			modelMatrix.rotate((x1-x)/speed,0,1,0);
-			modelMatrix.rotate((y1-y)/speed,1,0,0);
+			modelMatrix.rotate(-(x1-x)/speed,0,1,0);
+			modelMatrix.rotate(-(y1-y)/speed,1,0,0);
 			x=x1;
 			y=y1;
 		}
-		//elem.addEventListener('mousedown',mousedown,false);
-		//elem.addEventListener('touchstart',mousedown,false);
-		//elem.addEventListener('mousemove',mousemove,false);
-		//elem.addEventListener('touchmove',mousemove,false);
+		function mouseup(){
+			tip=false;
+		}
+		elem.addEventListener('mousedown',mousedown,false);
+		elem.addEventListener('touchstart',mousedown,false);
+		elem.addEventListener('mousemove',mousemove,false);
+		elem.addEventListener('touchmove',mousemove,false);
+		elem.addEventListener('mouseup',mouseup,false);
+		elem.addEventListener('touchend',mouseup,false);
 	}();
 </script>
 </body>
