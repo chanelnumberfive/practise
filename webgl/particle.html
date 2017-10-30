@@ -1,0 +1,143 @@
+<!doctype html>
+<html style="height:100%;">
+<head>
+<meta charset="utf-8">
+<title>a scene</title>
+<style>
+* {
+	padding: 0;
+	margin: 0;
+}
+.box {
+	position:fixed;
+	top:0;
+	left:0;
+	width:100%;
+	height:100%;
+	background-image:url(../images/starry_background.jpg);
+	background-repeat: no-repeat;
+	background-size:cover;
+}
+canvas {
+	position: fixed;
+	top:0;
+	left:0;
+	display: block;
+	margin: 0 auto;
+	z-index:10;
+}
+	input{
+		position:fixed;
+		right:20px;
+		top:20px;
+		z-index:100;
+	}
+</style>
+</head>
+
+<body style="height:100%;">
+<input id="range" type="range" value="30">
+<div class="box">
+	<canvas id="canvas"></canvas>
+</div>
+<script type="application/javascript" src="../js/jquery-3.2.1.min.js"></script> 
+<script type="application/javascript" src="../js/blz-webgl.js"></script> 
+<script type="application/javascript">
+	+function(){
+		'use strict';
+		
+		var elem=document.getElementById('canvas'),
+			w=window.innerWidth,
+			h=window.innerHeight;
+		elem.width=w;
+		elem.height=h;
+		
+		var tool=$.blz;
+		var shape=''+
+		'#version 100\n'+	
+		'attribute vec4 a_position;\n'+
+		'attribute vec2 a_textureCoord;\n'+
+		'varying vec2 v_textureCoord;\n'+
+		'uniform mat4 viewMatrix;\n'+
+		'void main(){\n'+
+			'gl_Position=viewMatrix*a_position;\n'+
+			'gl_PointSize=abs(a_position.z)/25.0;\n'+
+			'v_textureCoord=a_textureCoord;\n'+
+		'}\n',
+		color=''+
+		'#version 100\n'+	
+		'#ifdef GL_ES\n' +
+		'precision mediump float;\n' +
+		'#endif\n' +
+		'uniform sampler2D u_sampler0;\n'+		
+		'varying vec3 v_color;\n'+	
+		'void main(){\n'+
+			//'vec4 v_color0=texture2D(u_sampler0,vec2(gl_PointCoord));\n'+
+			'gl_FragColor=vec4(1.0,0.0,0.0,1.0);\n'+	
+		'}\n',
+		gl=tool.initWebGl(elem);
+		
+		tool.initShaders(gl,shape,color);
+		
+		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix');
+		var viewMatrix=new tool.Matrix4(),
+			baseViewMatrix=new tool.Matrix4();
+		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.003,1000.0).lookAt(0,0,3,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
+		
+		var modelMatrix=new tool.Matrix4();
+		
+		var time=+new Date();
+		gl.clearColor(0.0, 0.0, 0.0, 0.0);
+		
+		// 粒子坐标
+		var data1=[];
+		var range = 500;
+            for (var i = 0; i < 15000; i++) {
+                data1.push(Math.random() * range - range / 2);
+                data1.push(Math.random() * range - range / 2);
+                data1.push(Math.random() * range - range / 2);
+            };
+		var data=new Float32Array(data1);
+		var n=tool.createPointsData({
+			gl:gl,
+			data:data,
+			dataLength:3,
+			positionName:'a_position'
+		});
+		//modelMatrix.rotate(15,1,0,1.4);
+		
+		// 深度识别
+		gl.enable(gl.DEPTH_TEST);
+		//gl.enable(gl.POLYGON_OFFSET_FILL);
+		//gl.polygonOffset(1.0,1.0);
+		//gl.enable (gl.BLEND);
+	  // Set blending function
+	    //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+		
+		function init(){
+			var now=+new Date();
+			gl.clear(gl.DEPTH_BUFFER_BIT|gl.COLOR_BUFFER_BIT);
+			//modelMatrix.rotate((now-time)/100,0,1,0);
+			viewMatrix.set(baseViewMatrix).multiply(modelMatrix);
+			time=now;
+			gl.uniformMatrix4fv(viewMatrixLocation,false,viewMatrix.elements);
+			gl.drawArrays(gl.POINTS,0,15000);
+			requestAnimationFrame(init);
+		}
+		init();
+		function handleResize(){
+			elem.width=window.innerWidth;
+			elem.height=window.innerHeight;
+			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,1000.0).lookAt(0,0,0.002,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
+			gl.viewport(0,0,window.innerWidth,window.innerHeight);
+		}
+		window.addEventListener('resize',handleResize);
+		document.getElementById('range').addEventListener('input',function(e){
+			var value=this.value-0;
+			value=value*10;
+			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,1000.0).lookAt(0,0,value,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
+		});
+	}();
+</script>
+</body>
+</html>
