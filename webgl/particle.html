@@ -36,7 +36,7 @@ canvas {
 </head>
 
 <body style="height:100%;">
-<input id="range" type="range" value="30">
+<input id="range" type="range" value="44">
 <div class="box">
 	<canvas id="canvas"></canvas>
 </div>
@@ -61,7 +61,6 @@ canvas {
 		'uniform mat4 viewMatrix;\n'+
 		'void main(){\n'+
 			'gl_Position=viewMatrix*a_position;\n'+
-			'gl_PointSize=abs(a_position.z)/25.0;\n'+
 			'v_textureCoord=a_textureCoord;\n'+
 		'}\n',
 		color=''+
@@ -69,11 +68,12 @@ canvas {
 		'#ifdef GL_ES\n' +
 		'precision mediump float;\n' +
 		'#endif\n' +
-		'uniform sampler2D u_sampler0;\n'+		
+		'uniform sampler2D u_sampler0;\n'+
+		'varying vec2 v_textureCoord;\n'+	
 		'varying vec3 v_color;\n'+	
 		'void main(){\n'+
-			//'vec4 v_color0=texture2D(u_sampler0,vec2(gl_PointCoord));\n'+
-			'gl_FragColor=vec4(1.0,0.0,0.0,1.0);\n'+	
+			'vec4 v_color0=texture2D(u_sampler0,v_textureCoord);\n'+
+			'gl_FragColor=v_color0;\n'+	
 		'}\n',
 		gl=tool.initWebGl(elem);
 		
@@ -82,7 +82,7 @@ canvas {
 		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix');
 		var viewMatrix=new tool.Matrix4(),
 			baseViewMatrix=new tool.Matrix4();
-		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.003,1000.0).lookAt(0,0,3,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
+		baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.003,1000.0).lookAt(0,0,440,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
 		
 		var modelMatrix=new tool.Matrix4();
 		
@@ -91,44 +91,89 @@ canvas {
 		
 		// 粒子坐标
 		var data1=[];
-		var range = 500;
-            for (var i = 0; i < 15000; i++) {
-                data1.push(Math.random() * range - range / 2);
-                data1.push(Math.random() * range - range / 2);
-                data1.push(Math.random() * range - range / 2);
+		var data2=[];
+		var range = 500,
+			x,y,z,
+			d=5;
+            for (var i = 0,j=0; i <5000; i++) {
+                x=Math.random() * range - range / 2;
+				y=Math.random() * range - range / 2;
+				z=Math.random() * range - range / 2;
+				data1.push(x);
+				data1.push(y);
+				data1.push(z);
+				data1.push(0);
+				data1.push(0);
+				
+				data1.push(x);
+				data1.push(y+d);
+				data1.push(z);
+				data1.push(0);
+				data1.push(1);
+				
+				data1.push(x+d);
+				data1.push(y+d);
+				data1.push(z);
+				data1.push(1);
+				data1.push(1);
+				
+				data1.push(x+d);
+				data1.push(y);
+				data1.push(z);
+				data1.push(1);
+				data1.push(0);
+				
+				data2.push(j);
+				data2.push(j+1);
+				data2.push(j+2);
+				
+				data2.push(j);
+				data2.push(j+2);
+				data2.push(j+3);
+				j+=4;
             };
 		var data=new Float32Array(data1);
 		var n=tool.createPointsData({
 			gl:gl,
-			data:data,
-			dataLength:3,
-			positionName:'a_position'
+			data:new Float32Array(data1),
+			dataLength:[3,2],
+			offset:[0,3],
+			stride:5,
+			positionName:['a_position','a_textureCoord']
 		});
-		//modelMatrix.rotate(15,1,0,1.4);
-		
+		var indexBuffer=gl.createBuffer();
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data2), gl.STATIC_DRAW);
+		tool.initTextures({
+			gl:gl,
+			textureName:['u_sampler0'],
+			textureUrl:[
+				'../images/sweetgirl.jpg'
+			],
+			fn:init
+		});
 		// 深度识别
 		gl.enable(gl.DEPTH_TEST);
-		//gl.enable(gl.POLYGON_OFFSET_FILL);
-		//gl.polygonOffset(1.0,1.0);
-		//gl.enable (gl.BLEND);
+		gl.enable(gl.POLYGON_OFFSET_FILL);
+		gl.polygonOffset(1.0,1.0);
+		gl.enable (gl.BLEND);
 	  // Set blending function
-	    //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+	    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 		
 		function init(){
 			var now=+new Date();
 			gl.clear(gl.DEPTH_BUFFER_BIT|gl.COLOR_BUFFER_BIT);
-			//modelMatrix.rotate((now-time)/100,0,1,0);
+			modelMatrix.rotate((now-time)/100,1,1,0);
 			viewMatrix.set(baseViewMatrix).multiply(modelMatrix);
 			time=now;
 			gl.uniformMatrix4fv(viewMatrixLocation,false,viewMatrix.elements);
-			gl.drawArrays(gl.POINTS,0,15000);
+			gl.drawElements(gl.TRIANGLES,30000, gl.UNSIGNED_SHORT, 0);
 			requestAnimationFrame(init);
 		}
-		init();
 		function handleResize(){
 			elem.width=window.innerWidth;
 			elem.height=window.innerHeight;
-			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,1000.0).lookAt(0,0,0.002,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
+			baseViewMatrix.setPerspective(45.0,window.innerWidth/window.innerHeight,0.001,1000.0).lookAt(0,0,document.getElementById('range').value-0,0.0,0.0, 0.0, 0.0, 1.0, 0.0);
 			gl.viewport(0,0,window.innerWidth,window.innerHeight);
 		}
 		window.addEventListener('resize',handleResize);

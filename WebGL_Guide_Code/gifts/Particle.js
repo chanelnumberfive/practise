@@ -136,7 +136,7 @@ function drawParticle(gl, p, perspectiveMatrixShaderLocation, modelMatrixShaderL
 
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g_quadVertexIndexBuffer);
 
-  for (var i = 0; i < p.length; ++i) {
+  for (var i = 0; i < 500; ++i) {
     if (p[i].wait <= 0) {
       g_modelMatrix.setTranslate(p[i].position[0], p[i].position[1], p[i].position[2]);
       // Rotate arounf z-axis to show the front face
