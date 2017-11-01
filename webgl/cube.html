@@ -60,7 +60,7 @@ canvas {
 		tool.initShaders(gl,shape,color);
 		
 		var matrix1Location= gl.getUniformLocation(gl.program, 'matrix');
-		var matrix1=new tool.matrix4();
+		var matrix1=new tool.Matrix4();
 		matrix1.setPerspective(45,1/1,1,100).lookAt(4,4,4, 0, 0, 0, 0, 1, 0);
 		
 		var time=+new Date();

@@ -60,9 +60,9 @@ canvas {
 		tool.initShaders(gl,shape,color);
 		
 		var viewMatrixLocation= gl.getUniformLocation(gl.program, 'viewMatrix');
-		var viewMatrix=new tool.matrix4();
+		var viewMatrix=new tool.Matrix4();
 		viewMatrix.setPerspective(45,1/1,1,100).lookAt(4,4,4, 0, 0, 0, 0, 1, 0);
-		var viewMatrix2=new tool.matrix4();
+		var viewMatrix2=new tool.Matrix4();
 		viewMatrix2.setPerspective(45,1/1,1,100).lookAt(4,4,4, 0, 0, 0, 0, 1, 0);
 		gl.clearColor(0.0, 0.0, 0.0, 1.0);
 		

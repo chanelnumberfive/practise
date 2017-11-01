@@ -97,7 +97,7 @@ canvas {
 		  var u_NormalMatrix = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
 
 		  // Calculate the view projection matrix
-		  var viewProjMatrix = new tool.matrix4();
+		  var viewProjMatrix = new tool.Matrix4();
 		  viewProjMatrix.setPerspective(50.0, canvas.width / canvas.height, 1.0, 100.0);
 		  viewProjMatrix.lookAt(20.0, 10.0, 30.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
@@ -147,7 +147,7 @@ canvas {
 
 		
 		// Coordinate transformation matrix
-		var g_modelMatrix = new tool.matrix4(), g_mvpMatrix = new tool.matrix4();
+		var g_modelMatrix = new tool.Matrix4(), g_mvpMatrix = new tool.Matrix4();
 
 		function draw(gl, n, viewProjMatrix, u_MvpMatrix, u_NormalMatrix) {
 		  // Clear color and depth buffer
@@ -194,7 +194,7 @@ canvas {
 
 		var g_matrixStack = []; // Array for storing a matrix
 		function pushMatrix(m) { // Store the specified matrix to the array
-		  var m2 = new tool.matrix4(m);
+		  var m2 = new tool.Matrix4(m);
 		  g_matrixStack.push(m2);
 		}
 
@@ -202,7 +202,7 @@ canvas {
 		  return g_matrixStack.pop();
 		}
 
-		var g_normalMatrix = new tool.matrix4();  // Coordinate transformation matrix for normals
+		var g_normalMatrix = new tool.Matrix4();  // Coordinate transformation matrix for normals
 
 		// Draw rectangular solid
 		function drawBox(gl, n, width, height, depth, viewProjMatrix, u_MvpMatrix, u_NormalMatrix) {
